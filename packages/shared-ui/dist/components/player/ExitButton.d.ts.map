@@ -1,0 +1,1 @@
+{"version":3,"file":"ExitButton.d.ts","sourceRoot":"","sources":["../../../src/components/player/ExitButton.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAM1B,UAAU,iBAAiB;IACzB,QAAQ,EAAE,MAAM,IAAI,CAAC;CACtB;AAED,QAAA,MAAM,UAAU,EAAE,KAAK,CAAC,EAAE,CAAC,iBAAiB,CAU1C,CAAC;AAUH,eAAe,UAAU,CAAC"}

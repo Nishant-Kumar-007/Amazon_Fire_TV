@@ -1,0 +1,1 @@
+{"version":3,"file":"SeekBar.d.ts","sourceRoot":"","sources":["../../../src/components/player/SeekBar.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAI1B,UAAU,YAAY;IACpB,WAAW,EAAE,MAAM,CAAC;IACpB,QAAQ,EAAE,MAAM,CAAC;CAClB;AAED,QAAA,MAAM,OAAO,wDAA0C,YAAY,uBAgBjE,CAAC;AAwBH,eAAe,OAAO,CAAC"}

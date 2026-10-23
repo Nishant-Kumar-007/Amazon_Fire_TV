@@ -1,0 +1,1 @@
+{"version":3,"file":"Controls.d.ts","sourceRoot":"","sources":["../../../src/components/player/Controls.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAQ1B,UAAU,aAAa;IACrB,MAAM,EAAE,OAAO,CAAC;IAChB,WAAW,EAAE,MAAM,IAAI,CAAC;IACxB,WAAW,EAAE,MAAM,CAAC;IACpB,QAAQ,EAAE,MAAM,CAAC;CAClB;AAED,QAAA,MAAM,QAAQ,EAAE,KAAK,CAAC,EAAE,CAAC,aAAa,CAmBpC,CAAC;AAgBH,eAAe,QAAQ,CAAC"}

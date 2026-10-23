@@ -1,0 +1,1 @@
+{"version":3,"file":"AppNavigator.d.ts","sourceRoot":"","sources":["../../src/navigation/AppNavigator.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAgC,MAAM,OAAO,CAAC;AAOrD,MAAM,WAAW,iBAAiB;IAChC,WAAW,CAAC,EAAE,OAAO,CAAC;IACtB,OAAO,CAAC,EAAE,MAAM,IAAI,CAAC;CACtB;AAED,MAAM,CAAC,OAAO,UAAU,YAAY,CAAC,EAAE,WAAkB,EAAE,OAAO,EAAE,EAAE,iBAAiB,4BAgCtF"}

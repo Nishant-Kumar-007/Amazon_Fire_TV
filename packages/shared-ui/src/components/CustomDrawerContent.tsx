@@ -1,22 +1,29 @@
-import { scaledPixels } from '../hooks/useScale';
-import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, Image, Platform, Text } from 'react-native';
-import { DefaultFocus, SpatialNavigationFocusableView, SpatialNavigationRoot } from 'react-tv-space-navigation';
+import {
+  DefaultFocus,
+  SpatialNavigationFocusableView,
+  SpatialNavigationRoot,
+  SpatialNavigationNode,
+} from 'react-tv-space-navigation';
+import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer';
+import { Direction } from '@bam.tech/lrud';
+import { scaledPixels } from '../hooks/useScale';
 import { DrawerParamList } from '../navigation/types';
 import { useMenuContext } from '../components/MenuContext';
 import { safeZones, colors } from '../theme';
-import { useCallback } from 'react';
-import { Direction } from '@bam.tech/lrud';
 import { getCloseDrawerDirection } from '../utils/rtl';
 
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
   const navigation = props.navigation;
   const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
   const styles = drawerStyles;
+
   const drawerItems = [
-    { name: 'Home', label: 'Home' },
-    { name: 'Explore', label: 'Explore' },
-    { name: 'TV', label: 'TV' },
+    { name: 'Home', label: 'Home', icon: '🏠' },
+    { name: 'Explore', label: 'Browse', icon: '🔍' },
+    { name: 'TV', label: 'My List', icon: '🔖' },
+    { name: 'FocusLab', label: 'FocusLab™', icon: '🔬' },
   ] as const;
 
   const onDirectionHandledWithoutMovement = useCallback(
@@ -30,60 +37,73 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   );
 
   return (
-    <SpatialNavigationRoot isActive={isMenuOpen} onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}>
+    <SpatialNavigationRoot
+      isActive={isMenuOpen}
+      onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}
+    >
       <View style={styles.drawerContainer}>
-        {/* Gradient-like scrim overlay */}
+        {/* Scrim Overlay */}
         <View style={styles.scrimOverlay} />
+
         <DrawerContentScrollView
           {...props}
           style={styles.container}
           scrollEnabled={false}
           contentContainerStyle={{
-            ...(Platform.OS === 'ios' && Platform.isTV && { paddingStart: 0, paddingEnd: 0, paddingTop: 0 }),
+            ...(Platform.OS === 'ios' &&
+              Platform.isTV && { paddingStart: 0, paddingEnd: 0, paddingTop: 0 }),
           }}
         >
+          {/* ViewEase Brand Header */}
           <View style={styles.header}>
-            <Image source={require('../assets/images/logo.png')} style={styles.profilePic} />
-            <Text style={styles.userName}>Pioneer Tom</Text>
-            <Text style={styles.switchAccount}>Switch account</Text>
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeText}>VIEWEASE TV</Text>
+            </View>
+            <Text style={styles.brandTitle}>ViewEase TV</Text>
+            <Text style={styles.brandTagline}>Every Scene, Understood.</Text>
           </View>
-          {drawerItems.map((item, index) =>
-            index === 0 ? (
-              <DefaultFocus key={index}>
-                <SpatialNavigationFocusableView
-                  onSelect={() => {
-                    navigation.jumpTo(item.name as keyof DrawerParamList);
-                    navigation.closeDrawer();
-                    toggleMenu(false);
-                  }}
-                >
-                  {({ isFocused }) => (
-                    <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
-                      <Text style={[styles.menuText, isFocused && styles.menuTextFocused]}>{item.label}</Text>
-                    </View>
-                  )}
-                </SpatialNavigationFocusableView>
-              </DefaultFocus>
-            ) : (
-              <SpatialNavigationFocusableView
-                key={index}
-                onSelect={() => {
-                  navigation.jumpTo(item.name as keyof DrawerParamList);
-                  navigation.closeDrawer();
-                  toggleMenu(false);
-                }}
-              >
-                {({ isFocused }) => (
-                  <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
-                    <Text style={[styles.menuText, isFocused && styles.menuTextFocused]}>{item.label}</Text>
-                  </View>
-                )}
-              </SpatialNavigationFocusableView>
-            ),
-          )}
+
+          {/* Navigation Items */}
+          <SpatialNavigationNode orientation="vertical">
+            <View>
+              {drawerItems.map((item, index) => {
+                const Component = index === 0 ? DefaultFocus : React.Fragment;
+                return (
+                  <Component key={item.name}>
+                    <SpatialNavigationFocusableView
+                      onSelect={() => {
+                        navigation.jumpTo(item.name as keyof DrawerParamList);
+                        navigation.closeDrawer();
+                        toggleMenu(false);
+                      }}
+                    >
+                      {({ isFocused }) => (
+                        <View
+                          style={[
+                            styles.menuItem,
+                            isFocused && styles.menuItemFocused,
+                          ]}
+                        >
+                          <Text style={styles.menuIcon}>{item.icon}</Text>
+                          <Text
+                            style={[
+                              styles.menuText,
+                              isFocused && styles.menuTextFocused,
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+                        </View>
+                      )}
+                    </SpatialNavigationFocusableView>
+                  </Component>
+                );
+              })}
+            </View>
+          </SpatialNavigationNode>
         </DrawerContentScrollView>
 
-        {/* Settings button at bottom */}
+        {/* Footer: Settings */}
         <View style={styles.footer}>
           <SpatialNavigationFocusableView
             onSelect={() => {
@@ -93,10 +113,21 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
             }}
           >
             {({ isFocused }) => (
-              <View style={[styles.settingsButton, isFocused && styles.settingsButtonFocused]}>
-                <View style={styles.cogIcon}>
-                  <Text style={[styles.cogIconText, isFocused && styles.cogIconTextFocused]}>⚙</Text>
-                </View>
+              <View
+                style={[
+                  styles.settingsButton,
+                  isFocused && styles.settingsButtonFocused,
+                ]}
+              >
+                <Text style={styles.settingsIcon}>⚙</Text>
+                <Text
+                  style={[
+                    styles.settingsText,
+                    isFocused && styles.settingsTextFocused,
+                  ]}
+                >
+                  Settings
+                </Text>
               </View>
             )}
           </SpatialNavigationFocusableView>
@@ -107,138 +138,124 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
 }
 
 const drawerStyles = StyleSheet.create({
-    drawerContainer: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    },
-    scrimOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      opacity: 0.9,
-    },
-    container: {
-      flex: 1,
-      paddingTop: scaledPixels(safeZones.titleSafe.vertical),
-    },
-    header: {
-      paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-      paddingVertical: scaledPixels(24),
-      marginBottom: scaledPixels(16),
-    },
-    profilePic: {
-      width: scaledPixels(200),
-      height: scaledPixels(200),
-      borderRadius: scaledPixels(24),
-      borderWidth: scaledPixels(4),
-      borderColor: colors.border,
-    },
-    userName: {
-      color: colors.text,
-      fontSize: scaledPixels(36),
-      fontWeight: '600',
-      marginTop: scaledPixels(20),
-    },
-    switchAccount: {
-      color: colors.textSecondary,
-      fontSize: scaledPixels(22),
-      marginTop: scaledPixels(8),
-    },
-    searchContainer: {
-      backgroundColor: colors.cardElevated,
-      padding: scaledPixels(16),
-      marginHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-      marginVertical: scaledPixels(12),
-      borderRadius: scaledPixels(8),
-    },
-    searchText: {
-      color: colors.textSecondary,
-      fontSize: scaledPixels(20),
-    },
-    menuItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: scaledPixels(20),
-      paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-      marginHorizontal: scaledPixels(16),
-      marginVertical: scaledPixels(6),
-      borderRadius: scaledPixels(8),
-      minHeight: scaledPixels(72),
-      borderWidth: scaledPixels(3),
-      borderColor: 'transparent',
-    },
-    menuItemFocused: {
-      backgroundColor: colors.focusBackground,
-      borderColor: colors.focusBorder,
-      transform: [{ scale: 1.05 }],
-      shadowColor: colors.focus,
-      shadowOffset: {
-        width: 0,
-        height: 0,
-      },
-      shadowOpacity: 0.6,
-      shadowRadius: scaledPixels(12),
-      elevation: 8,
-    },
-    icon: {
-      width: scaledPixels(32),
-      height: scaledPixels(32),
-      marginEnd: scaledPixels(20),
-    },
-    menuText: {
-      color: colors.text,
-      fontSize: scaledPixels(36),
-      fontWeight: '500',
-    },
-    menuTextFocused: {
-      color: colors.textOnPrimary,
-      fontWeight: '600',
-    },
-    footer: {
-      paddingHorizontal: scaledPixels(16),
-      paddingBottom: scaledPixels(safeZones.actionSafe.vertical),
-      paddingTop: scaledPixels(16),
-      borderTopWidth: scaledPixels(2),
-      borderTopColor: colors.border,
-    },
-    settingsButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: scaledPixels(20),
-      paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-      borderRadius: scaledPixels(8),
-      minHeight: scaledPixels(72),
-      borderWidth: scaledPixels(3),
-      borderColor: 'transparent',
-    },
-    settingsButtonFocused: {
-      backgroundColor: colors.focusBackground,
-      borderColor: colors.focusBorder,
-      transform: [{ scale: 1.05 }],
-      shadowColor: colors.focus,
-      shadowOffset: {
-        width: 0,
-        height: 0,
-      },
-      shadowOpacity: 0.6,
-      shadowRadius: scaledPixels(12),
-      elevation: 8,
-    },
-    cogIcon: {
-      width: scaledPixels(64),
-      height: scaledPixels(64),
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    cogIconText: {
-      fontSize: scaledPixels(48),
-      color: colors.text,
-    },
-    cogIconTextFocused: {
-      color: colors.textOnPrimary,
-    },
-  });
+  drawerContainer: {
+    flex: 1,
+    backgroundColor: colors.sidebar,
+    borderEndWidth: scaledPixels(1),
+    borderEndColor: colors.border,
+  },
+  scrimOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(8, 10, 13, 0.96)',
+  },
+  container: {
+    flex: 1,
+    paddingTop: scaledPixels(safeZones.titleSafe.vertical),
+  },
+  header: {
+    paddingHorizontal: scaledPixels(24),
+    paddingVertical: scaledPixels(20),
+    marginBottom: scaledPixels(16),
+    borderBottomWidth: scaledPixels(1),
+    borderBottomColor: colors.border,
+  },
+  brandBadge: {
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-start',
+    paddingHorizontal: scaledPixels(8),
+    paddingVertical: scaledPixels(3),
+    borderRadius: scaledPixels(4),
+    marginBottom: scaledPixels(8),
+  },
+  brandBadgeText: {
+    color: colors.textOnPrimary,
+    fontWeight: '800',
+    fontSize: scaledPixels(11),
+    letterSpacing: 1,
+  },
+  brandTitle: {
+    color: colors.text,
+    fontSize: scaledPixels(26),
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  brandTagline: {
+    color: colors.primaryLight,
+    fontSize: scaledPixels(14),
+    marginTop: scaledPixels(4),
+    fontStyle: 'italic',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: scaledPixels(14),
+    paddingHorizontal: scaledPixels(20),
+    marginHorizontal: scaledPixels(12),
+    marginVertical: scaledPixels(4),
+    borderRadius: scaledPixels(8),
+    borderWidth: scaledPixels(2),
+    borderColor: 'transparent',
+  },
+  menuItemFocused: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primaryLight,
+    transform: [{ scale: 1.04 }],
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: scaledPixels(10),
+    elevation: 8,
+  },
+  menuIcon: {
+    fontSize: scaledPixels(20),
+    marginEnd: scaledPixels(14),
+  },
+  menuText: {
+    color: colors.textSecondary,
+    fontSize: scaledPixels(20),
+    fontWeight: '600',
+  },
+  menuTextFocused: {
+    color: colors.textOnPrimary,
+    fontWeight: '800',
+  },
+  footer: {
+    paddingHorizontal: scaledPixels(12),
+    paddingBottom: scaledPixels(safeZones.actionSafe.vertical),
+    paddingTop: scaledPixels(12),
+    borderTopWidth: scaledPixels(1),
+    borderTopColor: colors.border,
+  },
+  settingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: scaledPixels(14),
+    paddingHorizontal: scaledPixels(20),
+    borderRadius: scaledPixels(8),
+    borderWidth: scaledPixels(2),
+    borderColor: 'transparent',
+  },
+  settingsButtonFocused: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primaryLight,
+    transform: [{ scale: 1.04 }],
+  },
+  settingsIcon: {
+    fontSize: scaledPixels(20),
+    color: colors.textSecondary,
+    marginEnd: scaledPixels(14),
+  },
+  settingsText: {
+    color: colors.textSecondary,
+    fontSize: scaledPixels(18),
+    fontWeight: '600',
+  },
+  settingsTextFocused: {
+    color: colors.textOnPrimary,
+    fontWeight: '800',
+  },
+});

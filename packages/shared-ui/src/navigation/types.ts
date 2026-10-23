@@ -16,12 +16,16 @@ export type RootStackParamList = {
   Player: {
     movie: string;
     headerImage: string;
+    title?: string;
+    id?: string;
   };
+  FocusLab: undefined;
 };
 
 export type DrawerParamList = {
   Home: undefined;
   Explore: undefined;
   TV: undefined;
+  FocusLab: undefined;
   Settings: undefined;
 };

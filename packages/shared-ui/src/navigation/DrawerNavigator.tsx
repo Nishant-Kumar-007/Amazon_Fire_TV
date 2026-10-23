@@ -13,6 +13,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ExploreScreen from '../screens/ExploreScreen';
 import TVScreen from '../screens/TVScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import FocusLabScreen from '../screens/FocusLabScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -79,7 +80,14 @@ export default function DrawerNavigator() {
           name="TV"
           component={TVScreen}
           options={{
-            drawerLabel: 'TV',
+            drawerLabel: 'My List',
+          }}
+        />
+        <Drawer.Screen
+          name="FocusLab"
+          component={FocusLabScreen}
+          options={{
+            drawerLabel: 'FocusLab™',
           }}
         />
         <Drawer.Screen
