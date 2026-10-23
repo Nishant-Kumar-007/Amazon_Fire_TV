@@ -21,6 +21,7 @@ export { default as TwinRunScreen } from './screens/TwinRunScreen';
 export * from './twinrun/types';
 export * from './twinrun/provenanceManifest';
 export * from './twinrun/canonicalTwinRun';
+export * from './twinrun/scenarioRunner';
 export * from './parity/types';
 export * from './parity/comparisonEngine';
 export * from './parity/canonicalScenario';

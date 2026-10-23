@@ -65,6 +65,7 @@ Object.defineProperty(exports, "TwinRunScreen", { enumerable: true, get: functio
 __exportStar(require("./twinrun/types"), exports);
 __exportStar(require("./twinrun/provenanceManifest"), exports);
 __exportStar(require("./twinrun/canonicalTwinRun"), exports);
+__exportStar(require("./twinrun/scenarioRunner"), exports);
 __exportStar(require("./parity/types"), exports);
 __exportStar(require("./parity/comparisonEngine"), exports);
 __exportStar(require("./parity/canonicalScenario"), exports);

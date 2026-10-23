@@ -1,6 +1,9 @@
 import {
   CANONICAL_TWINRUN_CHECKPOINTS,
   TWINRUN_MANIFEST,
+  getInitialCheckpointResults,
+  executeSingleCheckpointTest,
+  VEGA_EQUIVALENT_TARGETS,
 } from '@multi-tv/shared-ui';
 
 describe('ViewEase TwinRun — Synchronized Evidence Theatre & Verifiable Telemetry', () => {
@@ -84,4 +87,45 @@ describe('ViewEase TwinRun — Synchronized Evidence Theatre & Verifiable Teleme
       });
     });
   });
+
+  describe('4. Deterministic Scenario Test Engine', () => {
+    it('initializes baseline results with all 12 checkpoints in UNTESTED state', () => {
+      const initial = getInitialCheckpointResults();
+      expect(Object.keys(initial)).toHaveLength(12);
+      Object.values(initial).forEach((res) => {
+        expect(res.status).toBe('UNTESTED');
+        expect(res.latencyMs).toBe(0);
+        expect(res.vegaOsState.verified).toBe(false);
+      });
+    });
+
+    it('defines equivalent target assertions for all 12 checkpoints', () => {
+      CANONICAL_TWINRUN_CHECKPOINTS.forEach((cp) => {
+        const target = VEGA_EQUIVALENT_TARGETS[cp.id];
+        expect(target).toBeDefined();
+        expect(target.screenId).toBe(cp.fireOsState.screenId);
+        expect(target.playerState).toBe(cp.fireOsState.playerState);
+        expect(target.assertionDescription.length).toBeGreaterThan(10);
+      });
+    });
+
+    it('executes single checkpoint test with realistic latency and verifies state match', async () => {
+      const res = await executeSingleCheckpointTest('cp-06-video-paused', 'FAST');
+      expect(res.checkpointId).toBe('cp-06-video-paused');
+      expect(res.status).toBe('PASSED');
+      expect(res.latencyMs).toBeGreaterThan(0);
+      expect(res.vegaOsState.verified).toBe(true);
+      expect(res.vegaOsState.screenId).toBe('Player');
+      expect(res.vegaOsState.playerState).toBe('PAUSED');
+      expect(res.assertionNote).toContain('00:03.500');
+    });
+
+    it('executes ViewEase Assist overlay preservation test', async () => {
+      const res = await executeSingleCheckpointTest('cp-07-assist-open', 'FAST');
+      expect(res.status).toBe('PASSED');
+      expect(res.vegaOsState.overlayState).toBe('ASSIST_OPEN');
+      expect(res.vegaOsState.playerState).toBe('PAUSED');
+    });
+  });
 });
+
