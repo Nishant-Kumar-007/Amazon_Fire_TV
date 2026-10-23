@@ -32,50 +32,47 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ExploreScreen;
 const react_1 = __importStar(require("react"));
 const react_native_1 = require("react-native");
 const native_1 = require("@react-navigation/native");
-const react_tv_space_navigation_1 = require("react-tv-space-navigation");
-const useScale_1 = require("../hooks/useScale");
 const viewEaseCatalog_1 = require("../data/viewEaseCatalog");
 const theme_1 = require("../theme");
-const rtl_1 = require("../utils/rtl");
-const MenuContext_1 = require("../components/MenuContext");
+const TopNavigationBar_1 = require("../components/TopNavigationBar");
+const PlatformLinearGradient_1 = __importDefault(require("../components/PlatformLinearGradient"));
 const GENRES = [
     'All',
+    'Web Series',
+    'Movies',
+    'Cartoons & Animation',
     'Sci-Fi',
     'Mystery',
-    'Thriller',
     'Documentary',
-    'ViewEase Originals',
 ];
-const SEARCH_PRESETS = ['All Titles', 'Quantum', 'Kyoto', 'Aurora', 'Botanist', 'Code'];
+const SEARCH_PRESETS = ['All Titles', 'Quantum', 'Kyoto', 'Aetheria', 'RoboBunny', 'Paradox', 'Genesis'];
 function ExploreScreen() {
     const navigation = (0, native_1.useNavigation)();
-    const { isOpen: isMenuOpen, toggleMenu } = (0, MenuContext_1.useMenuContext)();
-    const isFocused = (0, native_1.useIsFocused)();
-    const isActive = isFocused && !isMenuOpen;
     const [selectedGenre, setSelectedGenre] = (0, react_1.useState)('All');
-    const [activeSearchPreset, setActiveSearchPreset] = (0, react_1.useState)('All Titles');
-    const onDirectionHandledWithoutMovement = (0, react_1.useCallback)((movement) => {
-        if (movement === (0, rtl_1.getOpenDrawerDirection)()) {
-            navigation.dispatch(native_1.DrawerActions.openDrawer());
-            toggleMenu(true);
-        }
-    }, [toggleMenu, navigation]);
+    const [searchQuery, setSearchQuery] = (0, react_1.useState)('');
+    const [hoveredCardId, setHoveredCardId] = (0, react_1.useState)(null);
     const filteredTitles = (0, react_1.useMemo)(() => {
         return viewEaseCatalog_1.VIEWEASE_CATALOG.filter((item) => {
             const matchesGenre = selectedGenre === 'All' ||
-                item.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase()) ||
-                item.category.toLowerCase() === selectedGenre.toLowerCase();
-            const matchesSearch = activeSearchPreset === 'All Titles' ||
-                item.title.toLowerCase().includes(activeSearchPreset.toLowerCase()) ||
-                item.description.toLowerCase().includes(activeSearchPreset.toLowerCase());
+                item.category === selectedGenre ||
+                item.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase());
+            const q = searchQuery.trim().toLowerCase();
+            const matchesSearch = !q ||
+                item.title.toLowerCase().includes(q) ||
+                item.description.toLowerCase().includes(q) ||
+                item.genres.some((g) => g.toLowerCase().includes(q)) ||
+                (item.cast && item.cast.some((c) => c.toLowerCase().includes(q)));
             return matchesGenre && matchesSearch;
         });
-    }, [selectedGenre, activeSearchPreset]);
+    }, [selectedGenre, searchQuery]);
     const handleSelectTitle = (0, react_1.useCallback)((item) => {
         navigation.navigate('Details', {
             title: item.title,
@@ -91,282 +88,366 @@ function ExploreScreen() {
             duration: item.duration,
         });
     }, [navigation]);
-    return (<react_tv_space_navigation_1.SpatialNavigationRoot isActive={isActive} onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}>
-      <react_native_1.View style={styles.container}>
-        {/* Header */}
-        <react_native_1.View style={styles.header}>
-          <react_native_1.Text style={styles.headerTitle}>Browse & Search</react_native_1.Text>
+    return (<react_native_1.View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar_1.TopNavigationBar activeTab="Explore" onSelectCategory={(cat) => {
+            if (cat === 'All')
+                setSelectedGenre('All');
+            else
+                setSelectedGenre(cat);
+        }}/>
+
+      <react_native_1.ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header & Search Bar */}
+        <react_native_1.View style={styles.headerSection}>
+          <react_native_1.Text style={styles.headerTitle}>Explore & Search Library</react_native_1.Text>
           <react_native_1.Text style={styles.headerSubtitle}>
-            Explore the curated ViewEase entertainment library ({filteredTitles.length} titles)
+            Browse {filteredTitles.length} titles across Web Series, Blockbusters, Anime & Documentaries
           </react_native_1.Text>
+
+          {/* Search Box */}
+          <react_native_1.View style={styles.searchBarWrapper}>
+            <react_native_1.Text style={styles.searchIcon}>🔍</react_native_1.Text>
+            <react_native_1.TextInput style={styles.searchInput} placeholder="Search by title, genre, director or actor..." placeholderTextColor="rgba(240, 243, 248, 0.45)" value={searchQuery} onChangeText={setSearchQuery}/>
+            {searchQuery.length > 0 && (<react_native_1.Pressable onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+                <react_native_1.Text style={styles.clearSearchText}>✕</react_native_1.Text>
+              </react_native_1.Pressable>)}
+          </react_native_1.View>
         </react_native_1.View>
 
-        {/* Filter Pills - Genre */}
+        {/* Category Filter Pills */}
         <react_native_1.View style={styles.filterSection}>
-          <react_native_1.Text style={styles.filterSectionTitle}>CATEGORIES</react_native_1.Text>
-          <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-            <react_native_1.View style={styles.pillsRow}>
-              {GENRES.map((genre, idx) => {
+          <react_native_1.Text style={styles.filterSectionTitle}>BROWSE CATEGORIES</react_native_1.Text>
+          <react_native_1.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+            {GENRES.map((genre) => {
             const isSelected = selectedGenre === genre;
-            const Component = idx === 0 ? react_tv_space_navigation_1.DefaultFocus : react_1.default.Fragment;
-            return (<Component key={genre}>
-                    <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => setSelectedGenre(genre)}>
-                      {({ isFocused: pillFocused }) => (<react_native_1.View style={[
-                        styles.filterPill,
-                        isSelected && styles.filterPillSelected,
-                        pillFocused && styles.filterPillFocused,
-                    ]}>
-                          <react_native_1.Text style={[
-                        styles.filterPillText,
-                        isSelected && styles.filterPillTextSelected,
-                        pillFocused && styles.filterPillTextFocused,
-                    ]}>
-                            {genre}
-                          </react_native_1.Text>
-                        </react_native_1.View>)}
-                    </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-                  </Component>);
-        })}
-            </react_native_1.View>
-          </react_tv_space_navigation_1.SpatialNavigationNode>
-        </react_native_1.View>
-
-        {/* Search Presets Row */}
-        <react_native_1.View style={styles.filterSection}>
-          <react_native_1.Text style={styles.filterSectionTitle}>POPULAR SEARCHES</react_native_1.Text>
-          <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-            <react_native_1.View style={styles.pillsRow}>
-              {SEARCH_PRESETS.map((query) => {
-            const isSelected = activeSearchPreset === query;
-            return (<react_tv_space_navigation_1.SpatialNavigationFocusableView key={query} onSelect={() => setActiveSearchPreset(query)}>
-                    {({ isFocused: pillFocused }) => (<react_native_1.View style={[
-                        styles.searchPill,
-                        isSelected && styles.searchPillSelected,
-                        pillFocused && styles.searchPillFocused,
-                    ]}>
-                        <react_native_1.Text style={styles.searchPillIcon}>🔍</react_native_1.Text>
-                        <react_native_1.Text style={[
-                        styles.searchPillText,
-                        isSelected && styles.searchPillTextSelected,
-                        pillFocused && styles.searchPillTextFocused,
-                    ]}>
-                          {query}
-                        </react_native_1.Text>
-                      </react_native_1.View>)}
-                  </react_tv_space_navigation_1.SpatialNavigationFocusableView>);
-        })}
-            </react_native_1.View>
-          </react_tv_space_navigation_1.SpatialNavigationNode>
-        </react_native_1.View>
-
-        {/* Catalog Grid */}
-        <react_native_1.ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
-          <react_tv_space_navigation_1.SpatialNavigationNode orientation="vertical">
-            <react_native_1.View style={styles.gridCards}>
-              {filteredTitles.map((title) => (<react_tv_space_navigation_1.SpatialNavigationFocusableView key={title.id} onSelect={() => handleSelectTitle(title)}>
-                  {({ isFocused: cardFocused }) => (<react_native_1.View style={[
-                    styles.gridCard,
-                    cardFocused && styles.gridCardFocused,
+            return (<react_native_1.Pressable key={genre} accessibilityRole="button" onPress={() => setSelectedGenre(genre)} style={({ hovered }) => [
+                    styles.filterPill,
+                    isSelected && styles.filterPillSelected,
+                    hovered && styles.filterPillHovered,
                 ]}>
-                      <react_native_1.Image source={{ uri: title.headerImage }} style={styles.gridCardImage} resizeMode="cover"/>
-                      <react_native_1.View style={styles.gridCardOverlay}>
-                        <react_native_1.View style={styles.badgeRow}>
-                          <react_native_1.View style={styles.ratingBadge}>
-                            <react_native_1.Text style={styles.ratingText}>★ {title.rating}</react_native_1.Text>
-                          </react_native_1.View>
-                          <react_native_1.Text style={styles.yearText}>{title.releaseYear}</react_native_1.Text>
-                        </react_native_1.View>
-                        <react_native_1.Text style={styles.gridCardTitle} numberOfLines={1}>
-                          {title.title}
-                        </react_native_1.Text>
-                        <react_native_1.Text style={styles.gridCardGenres} numberOfLines={1}>
-                          {title.genres.join(' • ')}
-                        </react_native_1.Text>
-                      </react_native_1.View>
-                    </react_native_1.View>)}
-                </react_tv_space_navigation_1.SpatialNavigationFocusableView>))}
-            </react_native_1.View>
-          </react_tv_space_navigation_1.SpatialNavigationNode>
-        </react_native_1.ScrollView>
-      </react_native_1.View>
-    </react_tv_space_navigation_1.SpatialNavigationRoot>);
+                  <react_native_1.Text style={[
+                    styles.filterPillText,
+                    isSelected && styles.filterPillTextSelected,
+                ]}>
+                    {genre}
+                  </react_native_1.Text>
+                </react_native_1.Pressable>);
+        })}
+          </react_native_1.ScrollView>
+        </react_native_1.View>
+
+        {/* Quick Keyword Pills */}
+        <react_native_1.View style={styles.filterSection}>
+          <react_native_1.Text style={styles.filterSectionTitle}>QUICK SEARCH TAGS</react_native_1.Text>
+          <react_native_1.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+            {SEARCH_PRESETS.map((preset) => {
+            const isSelected = preset === 'All Titles' ? searchQuery === '' : searchQuery === preset;
+            return (<react_native_1.Pressable key={preset} accessibilityRole="button" onPress={() => setSearchQuery(preset === 'All Titles' ? '' : preset)} style={({ hovered }) => [
+                    styles.searchPresetPill,
+                    isSelected && styles.searchPresetPillSelected,
+                    hovered && styles.searchPresetPillHovered,
+                ]}>
+                  <react_native_1.Text style={[
+                    styles.searchPresetText,
+                    isSelected && styles.searchPresetTextSelected,
+                ]}>
+                    #{preset}
+                  </react_native_1.Text>
+                </react_native_1.Pressable>);
+        })}
+          </react_native_1.ScrollView>
+        </react_native_1.View>
+
+        {/* Responsive Grid of Cards */}
+        <react_native_1.View style={styles.gridContainer}>
+          {filteredTitles.map((item) => {
+            const isHovered = hoveredCardId === item.id;
+            return (<react_native_1.Pressable key={item.id} accessibilityRole="button" onPress={() => handleSelectTitle(item)} 
+            // @ts-ignore
+            onMouseEnter={() => setHoveredCardId(item.id)} onMouseLeave={() => setHoveredCardId(null)} style={({ pressed }) => [
+                    styles.gridCard,
+                    isHovered && styles.gridCardHighlighted,
+                    pressed && styles.gridCardPressed,
+                ]}>
+                <react_native_1.Image source={{ uri: item.headerImage || item.posterImage }} style={styles.cardImage} resizeMode="cover"/>
+
+                <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11, 13, 17, 0.95)']} start={{ x: 0, y: 0.4 }} end={{ x: 0, y: 1 }} style={styles.cardGradient}/>
+
+                <react_native_1.View style={styles.cardInfo}>
+                  <react_native_1.Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                  </react_native_1.Text>
+                  <react_native_1.View style={styles.cardMeta}>
+                    <react_native_1.Text style={styles.cardCategory}>{item.category || item.genres[0]}</react_native_1.Text>
+                    <react_native_1.Text style={styles.cardRating}>★ {item.rating}</react_native_1.Text>
+                  </react_native_1.View>
+                </react_native_1.View>
+
+                {/* White Boundary overlay when hovered/focused */}
+                {isHovered && (<react_native_1.View style={styles.hoverOverlay}>
+                    <react_native_1.View style={styles.playBadge}>
+                      <react_native_1.Text style={styles.playBadgeText}>▶ DETAILS</react_native_1.Text>
+                    </react_native_1.View>
+                  </react_native_1.View>)}
+              </react_native_1.Pressable>);
+        })}
+        </react_native_1.View>
+
+        {filteredTitles.length === 0 && (<react_native_1.View style={styles.emptyState}>
+            <react_native_1.Text style={styles.emptyIcon}>🔍</react_native_1.Text>
+            <react_native_1.Text style={styles.emptyTitle}>No matching titles found</react_native_1.Text>
+            <react_native_1.Text style={styles.emptyText}>
+              Try searching for "Quantum", "Kyoto", "RoboBunny", or reset filters.
+            </react_native_1.Text>
+            <react_native_1.Pressable onPress={() => {
+                setSelectedGenre('All');
+                setSearchQuery('');
+            }} style={styles.resetBtn}>
+              <react_native_1.Text style={styles.resetBtnText}>Reset All Filters</react_native_1.Text>
+            </react_native_1.Pressable>
+          </react_native_1.View>)}
+      </react_native_1.ScrollView>
+    </react_native_1.View>);
 }
 const styles = react_native_1.StyleSheet.create({
-    container: {
+    rootScreen: {
         flex: 1,
-        backgroundColor: theme_1.colors.background,
-        paddingHorizontal: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.horizontal),
-        paddingTop: (0, useScale_1.scaledPixels)(theme_1.safeZones.titleSafe.vertical),
-        paddingBottom: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.vertical),
+        backgroundColor: '#0B0D11',
     },
-    header: {
-        marginBottom: (0, useScale_1.scaledPixels)(16),
+    mainScrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 60,
+    },
+    headerSection: {
+        paddingHorizontal: 48,
+        paddingTop: 32,
+        paddingBottom: 20,
     },
     headerTitle: {
+        fontSize: 32,
+        fontWeight: '900',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(38),
-        fontWeight: '800',
         letterSpacing: 0.5,
     },
     headerSubtitle: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(18),
-        marginTop: (0, useScale_1.scaledPixels)(4),
+        fontSize: 14,
+        color: theme_1.colors.textMuted,
+        marginTop: 6,
+    },
+    searchBarWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#161B22',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        height: 50,
+        marginTop: 18,
+        maxWidth: 700,
+    },
+    searchIcon: {
+        fontSize: 18,
+        marginRight: 10,
+    },
+    searchInput: {
+        flex: 1,
+        color: theme_1.colors.text,
+        fontSize: 15,
+        outlineStyle: 'none',
+    },
+    clearSearchBtn: {
+        padding: 6,
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    clearSearchText: {
+        color: theme_1.colors.textMuted,
+        fontSize: 14,
     },
     filterSection: {
-        marginBottom: (0, useScale_1.scaledPixels)(14),
+        paddingHorizontal: 48,
+        marginBottom: 16,
     },
     filterSectionTitle: {
-        color: theme_1.colors.textTertiary,
-        fontSize: (0, useScale_1.scaledPixels)(13),
-        fontWeight: '700',
+        fontSize: 11,
+        fontWeight: '800',
+        color: theme_1.colors.textMuted,
         letterSpacing: 1,
-        marginBottom: (0, useScale_1.scaledPixels)(8),
+        marginBottom: 10,
+        textTransform: 'uppercase',
     },
     pillsRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
+        gap: 10,
     },
     filterPill: {
-        backgroundColor: theme_1.colors.card,
-        borderRadius: (0, useScale_1.scaledPixels)(20),
-        paddingHorizontal: (0, useScale_1.scaledPixels)(18),
-        paddingVertical: (0, useScale_1.scaledPixels)(10),
-        marginEnd: (0, useScale_1.scaledPixels)(12),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.border,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.12)',
+        // @ts-ignore
+        cursor: 'pointer',
     },
     filterPillSelected: {
-        borderColor: theme_1.colors.primary,
-        backgroundColor: 'rgba(229, 169, 60, 0.16)',
-    },
-    filterPillFocused: {
         backgroundColor: theme_1.colors.primary,
-        borderColor: theme_1.colors.primaryLight,
-        transform: [{ scale: 1.06 }],
+        borderColor: theme_1.colors.primary,
+    },
+    filterPillHovered: {
+        borderColor: '#FFFFFF',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
     filterPillText: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(16),
+        fontSize: 13,
         fontWeight: '600',
+        color: theme_1.colors.textMuted,
     },
     filterPillTextSelected: {
-        color: theme_1.colors.primaryLight,
-        fontWeight: '700',
+        color: '#0B0D11',
+        fontWeight: '800',
     },
-    filterPillTextFocused: {
-        color: theme_1.colors.textOnPrimary,
-        fontWeight: '700',
+    searchPresetPill: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.04)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        // @ts-ignore
+        cursor: 'pointer',
     },
-    searchPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: theme_1.colors.backgroundElevated,
-        borderRadius: (0, useScale_1.scaledPixels)(16),
-        paddingHorizontal: (0, useScale_1.scaledPixels)(14),
-        paddingVertical: (0, useScale_1.scaledPixels)(8),
-        marginEnd: (0, useScale_1.scaledPixels)(10),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: theme_1.colors.border,
+    searchPresetPillSelected: {
+        borderColor: theme_1.colors.primary,
+        backgroundColor: 'rgba(229, 169, 60, 0.15)',
     },
-    searchPillSelected: {
-        borderColor: theme_1.colors.primaryLight,
-        backgroundColor: 'rgba(229, 169, 60, 0.12)',
+    searchPresetPillHovered: {
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
-    searchPillFocused: {
-        backgroundColor: theme_1.colors.primary,
-        borderColor: theme_1.colors.primaryLight,
-        transform: [{ scale: 1.05 }],
-    },
-    searchPillIcon: {
-        fontSize: (0, useScale_1.scaledPixels)(13),
-        marginEnd: (0, useScale_1.scaledPixels)(6),
-    },
-    searchPillText: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(14),
+    searchPresetText: {
+        fontSize: 12,
+        color: theme_1.colors.textMuted,
         fontWeight: '500',
     },
-    searchPillTextSelected: {
-        color: theme_1.colors.primaryLight,
+    searchPresetTextSelected: {
+        color: theme_1.colors.primary,
         fontWeight: '700',
     },
-    searchPillTextFocused: {
-        color: theme_1.colors.textOnPrimary,
-        fontWeight: '700',
-    },
-    gridScroll: {
-        flex: 1,
-        marginTop: (0, useScale_1.scaledPixels)(10),
-    },
-    gridCards: {
+    gridContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'flex-start',
+        paddingHorizontal: 48,
+        paddingTop: 16,
+        gap: 20,
     },
     gridCard: {
-        width: (0, useScale_1.scaledPixels)(340),
-        height: (0, useScale_1.scaledPixels)(200),
-        borderRadius: (0, useScale_1.scaledPixels)(10),
+        width: 270,
+        height: 156,
+        borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: theme_1.colors.card,
-        marginEnd: (0, useScale_1.scaledPixels)(24),
-        marginBottom: (0, useScale_1.scaledPixels)(24),
-        borderWidth: (0, useScale_1.scaledPixels)(3),
+        position: 'relative',
+        backgroundColor: '#161B22',
+        borderWidth: 2,
         borderColor: 'transparent',
+        // @ts-ignore
+        cursor: 'pointer',
     },
-    gridCardFocused: {
-        borderColor: theme_1.colors.primary,
+    gridCardHighlighted: {
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        // @ts-ignore
+        boxShadow: '0 0 22px rgba(255, 255, 255, 0.55)',
         transform: [{ scale: 1.06 }],
-        shadowColor: theme_1.colors.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.7,
-        shadowRadius: (0, useScale_1.scaledPixels)(14),
-        elevation: 10,
+        zIndex: 50,
     },
-    gridCardImage: {
+    gridCardPressed: {
+        transform: [{ scale: 1.02 }],
+    },
+    cardImage: {
         width: '100%',
         height: '100%',
     },
-    gridCardOverlay: {
+    cardGradient: {
+        ...react_native_1.StyleSheet.absoluteFillObject,
+    },
+    cardInfo: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(11, 13, 17, 0.92)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(14),
-        paddingVertical: (0, useScale_1.scaledPixels)(10),
+        bottom: 8,
+        left: 10,
+        right: 10,
     },
-    badgeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(4),
-    },
-    ratingBadge: {
-        backgroundColor: 'rgba(229, 169, 60, 0.2)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(6),
-        paddingVertical: (0, useScale_1.scaledPixels)(2),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-    },
-    ratingText: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(12),
-        fontWeight: '700',
-    },
-    yearText: {
-        color: theme_1.colors.textTertiary,
-        fontSize: (0, useScale_1.scaledPixels)(12),
-    },
-    gridCardTitle: {
+    cardTitle: {
+        fontSize: 13,
+        fontWeight: '800',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(17),
+    },
+    cardMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 3,
+    },
+    cardCategory: {
+        fontSize: 10,
+        color: theme_1.colors.textMuted,
+        fontWeight: '600',
+    },
+    cardRating: {
+        fontSize: 10,
+        color: theme_1.colors.primary,
         fontWeight: '700',
     },
-    gridCardGenres: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(13),
-        marginTop: (0, useScale_1.scaledPixels)(2),
+    hoverOverlay: {
+        ...react_native_1.StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    playBadge: {
+        backgroundColor: theme_1.colors.primary,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 14,
+    },
+    playBadgeText: {
+        fontSize: 11,
+        fontWeight: '900',
+        color: '#0B0D11',
+    },
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: 60,
+    },
+    emptyIcon: {
+        fontSize: 48,
+        marginBottom: 12,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: theme_1.colors.text,
+    },
+    emptyText: {
+        fontSize: 13,
+        color: theme_1.colors.textMuted,
+        marginTop: 6,
+    },
+    resetBtn: {
+        marginTop: 18,
+        backgroundColor: theme_1.colors.primary,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    resetBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#0B0D11',
     },
 });

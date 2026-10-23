@@ -20,7 +20,11 @@ declare class ViewEaseStorageService {
     getPlaybackProgress(id: string): PlaybackProgress | null;
     getContinueWatching(): PlaybackProgress[];
     isInWatchlist(id: string): boolean;
+    isInMyList(id: string): boolean;
     toggleWatchlist(id: string): boolean;
+    toggleMyList(titleOrId: {
+        id: string;
+    } | string): boolean;
     getWatchlist(): string[];
     clearAll(): void;
 }

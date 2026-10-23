@@ -1,95 +1,159 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { StyleSheet, View, Image, Text, Platform } from 'react-native';
-import { useNavigation, DrawerActions, useIsFocused } from '@react-navigation/native';
+import {
+  StyleSheet,
+  View,
+  Image,
+  Text,
+  ScrollView,
+  Pressable,
+  Platform,
+  Modal,
+} from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   SpatialNavigationFocusableView,
   SpatialNavigationRoot,
   SpatialNavigationScrollView,
   SpatialNavigationNode,
-  SpatialNavigationVirtualizedList,
-  SpatialNavigationVirtualizedListRef,
   DefaultFocus,
 } from 'react-tv-space-navigation';
-import { Direction } from '@bam.tech/lrud';
 import { scaledPixels } from '../hooks/useScale';
 import { RootStackParamList } from '../navigation/types';
-import { fetchMoviesData, CardData } from '../data/moviesData';
+import { CardData } from '../data/moviesData';
 import { VIEWEASE_CATALOG, ViewEaseTitle } from '../data/viewEaseCatalog';
 import { StorageService, PlaybackProgress } from '../services/StorageService';
-import { colors, safeZones } from '../theme';
+import { colors } from '../theme';
 import PlatformLinearGradient from '../components/PlatformLinearGradient';
-import { getOpenDrawerDirection } from '../utils/rtl';
-import { useMenuContext } from '../components/MenuContext';
+import { TopNavigationBar } from '../components/TopNavigationBar';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DrawerNavigator'>;
 
-// Memoized Movie Card Component with warm amber focus state
-const MovieItem = React.memo(
-  ({
-    item,
-    isFocused,
-    progress,
-  }: {
-    item: CardData;
-    isFocused: boolean;
-    progress?: PlaybackProgress | null;
-  }) => {
-    const imageSource = useMemo(() => ({ uri: item.headerImage }), [item.headerImage]);
+// Interactive Movie Card Component with White Boundary on Hover/Focus
+interface MovieCardProps {
+  item: ViewEaseTitle;
+  isFocused?: boolean;
+  progress?: PlaybackProgress | null;
+  onPress: () => void;
+  onFocus?: () => void;
+}
 
-    return (
-      <View style={[styles.cardContainer, isFocused && styles.cardContainerFocused]}>
-        <Image
-          source={imageSource}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
+const MovieCard: React.FC<MovieCardProps> = ({
+  item,
+  isFocused = false,
+  progress,
+  onPress,
+  onFocus,
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const activeHighlight = isFocused || isHovered;
 
-        {/* Focus Glow Overlay */}
-        {isFocused && (
-          <View style={styles.cardFocusedOverlay}>
-            <Text style={styles.cardFocusedTitle} numberOfLines={1}>
-              {item.title}
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Watch ${item.title}`}
+      onPress={onPress}
+      // @ts-ignore - web hover events
+      onMouseEnter={() => {
+        setIsHovered(true);
+        if (onFocus) onFocus();
+      }}
+      onMouseLeave={() => setIsHovered(false)}
+      style={({ pressed }: any) => [
+        styles.cardContainer,
+        activeHighlight && styles.cardContainerHighlighted,
+        pressed && styles.cardContainerPressed,
+      ]}
+    >
+      <Image
+        source={{ uri: item.headerImage || item.posterImage }}
+        style={styles.cardImage}
+        resizeMode="cover"
+      />
+
+      {/* Subtle bottom gradient for card legibility */}
+      <PlatformLinearGradient
+        colors={['transparent', 'rgba(11, 13, 17, 0.92)']}
+        start={{ x: 0, y: 0.4 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.cardGradient}
+      />
+
+      {/* Card Info Overlay */}
+      <View style={styles.cardInfoContainer}>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <View style={styles.cardMetaRow}>
+          {item.category && (
+            <Text style={styles.cardCategory} numberOfLines={1}>
+              {item.category}
             </Text>
-            {item.category && (
-              <Text style={styles.cardFocusedCategory}>{item.category}</Text>
-            )}
-          </View>
-        )}
-
-        {/* Progress Bar for Continue Watching */}
-        {progress && (
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${progress.percent}%` }]} />
-          </View>
-        )}
+          )}
+          {item.rating && (
+            <Text style={styles.cardRating}>★ {item.rating}</Text>
+          )}
+        </View>
       </View>
-    );
-  },
-);
+
+      {/* White / Glow Boundary on Focus or Mouse Hover */}
+      {activeHighlight && (
+        <View style={styles.whiteBoundaryGlow}>
+          <View style={styles.playBadgeFloating}>
+            <Text style={styles.playBadgeText}>▶ PLAY</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Continue Watching Progress Bar */}
+      {progress && (
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressBar, { width: `${progress.percent}%` }]} />
+        </View>
+      )}
+    </Pressable>
+  );
+};
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const [allMovies, setAllMovies] = useState<CardData[]>(VIEWEASE_CATALOG);
-  const [continueWatching, setContinueWatching] = useState<PlaybackProgress[]>([]);
   const isFocused = useIsFocused();
-  const isActive = isFocused && !isMenuOpen;
 
-  // Load movies and continue watching on mount & on focus
+  // Catalog and user state
+  const [allMovies, setAllMovies] = useState<ViewEaseTitle[]>(VIEWEASE_CATALOG);
+  const [continueWatching, setContinueWatching] = useState<PlaybackProgress[]>([]);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('All');
+
+  // Hero carousel state (8 featured titles auto-advancing)
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [isHeroHovered, setIsHeroHovered] = useState(false);
+
+  // Category "View All" modal state
+  const [viewAllModalVisible, setViewAllModalVisible] = useState(false);
+  const [viewAllCategoryName, setViewAllCategoryName] = useState('');
+  const [viewAllMovies, setViewAllMovies] = useState<ViewEaseTitle[]>([]);
+
+  // 8 featured titles for the split-screen hero showcase
+  const heroFeaturedTitles: ViewEaseTitle[] = useMemo(() => {
+    return allMovies.slice(0, 8);
+  }, [allMovies]);
+
+  const activeHeroTitle: ViewEaseTitle = useMemo(() => {
+    return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || VIEWEASE_CATALOG[0];
+  }, [heroFeaturedTitles, heroIndex]);
+
+  // Auto-advance hero showcase every 6 seconds (unless hovered/interacting)
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const data = await fetchMoviesData();
-        if (isMounted) setAllMovies(data);
-      } catch (err) {
-        if (isMounted) setAllMovies(VIEWEASE_CATALOG);
-      }
-    };
-    load();
+    if (isHeroHovered) return;
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length);
+    }, 6000);
 
+    return () => clearInterval(interval);
+  }, [heroFeaturedTitles.length, isHeroHovered]);
+
+  // Load Continue Watching on mount and focus
+  useEffect(() => {
     const updateContinueWatching = () => {
       setContinueWatching(StorageService.getContinueWatching());
     };
@@ -97,33 +161,12 @@ export default function HomeScreen() {
     const unsubscribe = StorageService.subscribe(updateContinueWatching);
 
     return () => {
-      isMounted = false;
       unsubscribe();
     };
   }, [isFocused]);
 
-  const focusedItem: CardData = useMemo(
-    () => allMovies[focusedIndex] || allMovies[0] || VIEWEASE_CATALOG[0],
-    [focusedIndex, allMovies],
-  );
-
-  const headerImageSource = useMemo(
-    () => ({ uri: focusedItem.headerImage }),
-    [focusedItem.headerImage],
-  );
-
-  const onDirectionHandledWithoutMovement = useCallback(
-    (movement: Direction) => {
-      if (movement === getOpenDrawerDirection() && focusedIndex === 0) {
-        navigation.dispatch(DrawerActions.openDrawer());
-        toggleMenu(true);
-      }
-    },
-    [toggleMenu, focusedIndex, navigation],
-  );
-
   const navigateToDetails = useCallback(
-    (item: CardData) => {
+    (item: ViewEaseTitle) => {
       navigation.navigate('Details', {
         title: item.title,
         description: item.description,
@@ -142,467 +185,1182 @@ export default function HomeScreen() {
   );
 
   const navigateToPlayer = useCallback(
-    (item: CardData, startTime = 0) => {
+    (item: ViewEaseTitle, startTime = 0) => {
       navigation.navigate('Player', {
         movie: item.movie,
         headerImage: item.headerImage,
         title: item.title,
         id: String(item.id),
+        startTime,
       });
     },
     [navigation],
   );
 
-  // Rows configuration
-  const trendingMovies = useMemo(() => allMovies.slice(0, 5), [allMovies]);
-  const originalMovies = useMemo(
-    () => allMovies.filter((m) => m.category === 'ViewEase Originals' || m.genres?.includes('Sci-Fi')),
-    [allMovies],
-  );
-  const documentaries = useMemo(
-    () => allMovies.filter((m) => m.category === 'Documentaries' || m.genres?.includes('Nature')),
+  // Category filters
+  const trendingWebSeries = useMemo(
+    () => allMovies.filter((m) => m.category === 'Web Series' || m.genres?.includes('Web Series')),
     [allMovies],
   );
 
-  const renderCard = useCallback(
-    ({ item, index }: { item: CardData; index: number }, progress?: PlaybackProgress | null) => (
-      <SpatialNavigationFocusableView
-        onSelect={() => {
-          if (progress) {
-            navigateToPlayer(item, progress.positionSec);
-          } else {
-            navigateToDetails(item);
-          }
-        }}
-        onFocus={() => setFocusedIndex(index)}
-      >
-        {({ isFocused: cardFocused }) => (
-          <MovieItem item={item} isFocused={cardFocused} progress={progress} />
-        )}
-      </SpatialNavigationFocusableView>
-    ),
-    [navigateToDetails, navigateToPlayer],
+  const blockbusterMovies = useMemo(
+    () => allMovies.filter((m) => m.category === 'Movies' || m.genres?.includes('Movies')),
+    [allMovies],
   );
+
+  const cartoonsAndAnime = useMemo(
+    () =>
+      allMovies.filter(
+        (m) =>
+          m.category === 'Cartoons & Animation' ||
+          m.genres?.includes('Animation') ||
+          m.genres?.includes('Anime'),
+      ),
+    [allMovies],
+  );
+
+  const sciFiAndCyberpunk = useMemo(
+    () =>
+      allMovies.filter(
+        (m) =>
+          m.genres?.includes('Sci-Fi') ||
+          m.genres?.includes('Cyberpunk') ||
+          m.category === 'ViewEase Originals',
+      ),
+    [allMovies],
+  );
+
+  const documentaries = useMemo(
+    () =>
+      allMovies.filter(
+        (m) =>
+          m.category === 'Documentaries' ||
+          m.genres?.includes('Documentary') ||
+          m.genres?.includes('Nature') ||
+          m.genres?.includes('Science'),
+      ),
+    [allMovies],
+  );
+
+  // Open "View All" modal for a category
+  const openViewAll = (categoryTitle: string, moviesList: ViewEaseTitle[]) => {
+    setViewAllCategoryName(categoryTitle);
+    setViewAllMovies(moviesList);
+    setViewAllModalVisible(true);
+  };
+
+  // Horizontal row scrolling references
+  const rowRefs = useRef<{ [key: string]: ScrollView | null }>({});
+
+  const scrollRow = (key: string, direction: 'left' | 'right') => {
+    const scrollEl = rowRefs.current[key];
+    if (scrollEl) {
+      // @ts-ignore
+      if (scrollEl.scrollBy) {
+        // @ts-ignore
+        scrollEl.scrollBy({ left: direction === 'left' ? -500 : 500, behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
-    <SpatialNavigationRoot
-      isActive={isActive}
-      onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}
-    >
-      <View style={styles.container}>
-        {/* Cinematic Hero Header with Real-Time Backdrop */}
-        <View style={styles.header}>
+    <View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar (Always Visible, No Side Drawer Covering Page) */}
+      <TopNavigationBar
+        activeTab={activeCategoryFilter}
+        onSelectCategory={(cat) => {
+          setActiveCategoryFilter(cat);
+        }}
+        onOpenSearch={() => (navigation as any).navigate('Explore')}
+      />
+
+      <ScrollView
+        style={styles.mainScrollView}
+        contentContainerStyle={styles.mainScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* 2. Split-Screen Auto-Advancing Top Hero Showcase (8 Featured Titles) */}
+        <View
+          style={styles.heroShowcaseContainer}
+          // @ts-ignore - pause auto-rotation when user hovers on laptop
+          onMouseEnter={() => setIsHeroHovered(true)}
+          onMouseLeave={() => setIsHeroHovered(false)}
+        >
+          {/* Background image & gradient overlay */}
           <Image
-            style={styles.headerImage}
-            source={headerImageSource}
+            source={{ uri: activeHeroTitle.headerImage }}
+            style={styles.heroBackdropImage}
             resizeMode="cover"
           />
-
-          {/* Gradients for text contrast */}
           <PlatformLinearGradient
-            colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.7)', 'rgba(11,13,17,0.2)', 'transparent']}
+            colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.8)', 'rgba(11,13,17,0.3)', 'rgba(11,13,17,0.9)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.gradientLeft}
+            style={styles.heroGradientLeft}
           />
           <PlatformLinearGradient
             colors={['transparent', 'rgba(11,13,17,0.85)', colors.background]}
-            start={{ x: 0, y: 0 }}
+            start={{ x: 0, y: 0.6 }}
             end={{ x: 0, y: 1 }}
-            style={styles.gradientBottom}
+            style={styles.heroGradientBottom}
           />
 
-          {/* Hero Content Information */}
-          <View style={styles.headerContent}>
-            {/* Badges Row */}
-            <View style={styles.badgeRow}>
-              <View style={styles.brandBadge}>
-                <Text style={styles.brandBadgeText}>VIEWEASE ORIGINAL</Text>
+          {/* Split Screen Layout */}
+          <View style={styles.heroSplitContent}>
+            {/* Left Split Column: Metadata, Title, CTAs & Numbered Title Switcher */}
+            <View style={styles.heroLeftCol}>
+              {/* Badges Row */}
+              <View style={styles.heroBadgeRow}>
+                <View style={styles.spotlightBadge}>
+                  <Text style={styles.spotlightBadgeText}>🔥 LATEST FEATURED</Text>
+                </View>
+                {activeHeroTitle.category && (
+                  <View style={styles.categoryPill}>
+                    <Text style={styles.categoryPillText}>{activeHeroTitle.category}</Text>
+                  </View>
+                )}
+                {activeHeroTitle.releaseYear && (
+                  <View style={styles.yearPill}>
+                    <Text style={styles.yearPillText}>{activeHeroTitle.releaseYear}</Text>
+                  </View>
+                )}
+                {activeHeroTitle.contentRating && (
+                  <View style={styles.contentRatingPill}>
+                    <Text style={styles.contentRatingPillText}>{activeHeroTitle.contentRating}</Text>
+                  </View>
+                )}
+                <View style={styles.assistPill}>
+                  <Text style={styles.assistPillIcon}>⚡</Text>
+                  <Text style={styles.assistPillText}>ASSIST READY</Text>
+                </View>
               </View>
-              {focusedItem.contentRating && (
-                <View style={styles.metaBadge}>
-                  <Text style={styles.metaBadgeText}>{focusedItem.contentRating}</Text>
-                </View>
-              )}
-              {focusedItem.releaseYear && (
-                <View style={styles.metaBadge}>
-                  <Text style={styles.metaBadgeText}>{focusedItem.releaseYear}</Text>
-                </View>
-              )}
-              {focusedItem.rating && (
-                <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingText}>★ {focusedItem.rating}</Text>
-                </View>
-              )}
-              <View style={styles.assistPill}>
-                <Text style={styles.assistPillIcon}>⚡</Text>
-                <Text style={styles.assistPillText}>ASSIST ENABLED</Text>
-              </View>
-            </View>
 
-            {/* Title & Description */}
-            <Text style={styles.heroTitle} numberOfLines={1}>
-              {focusedItem.title}
-            </Text>
-            <Text style={styles.heroDescription} numberOfLines={3}>
-              {focusedItem.description}
-            </Text>
+              {/* Title & Tagline */}
+              <Text style={styles.heroTitle} numberOfLines={2}>
+                {activeHeroTitle.title}
+              </Text>
+              {activeHeroTitle.tagline ? (
+                <Text style={styles.heroTagline} numberOfLines={1}>
+                  "{activeHeroTitle.tagline}"
+                </Text>
+              ) : null}
 
-            {/* Hero CTAs */}
-            <SpatialNavigationNode orientation="horizontal">
-              <View style={styles.heroActionsRow}>
-                <DefaultFocus>
-                  <SpatialNavigationFocusableView
-                    onSelect={() => navigateToPlayer(focusedItem)}
-                  >
-                    {({ isFocused: btnFocused }) => (
-                      <View style={[styles.heroBtn, styles.playBtn, btnFocused && styles.heroBtnFocused]}>
-                        <Text style={[styles.heroBtnText, styles.playBtnText, btnFocused && styles.heroBtnTextFocused]}>
-                          ▶ Play Now
-                        </Text>
-                      </View>
-                    )}
-                  </SpatialNavigationFocusableView>
-                </DefaultFocus>
+              {/* Synopsis */}
+              <Text style={styles.heroDescription} numberOfLines={3}>
+                {activeHeroTitle.description}
+              </Text>
 
-                <SpatialNavigationFocusableView
-                  onSelect={() => navigateToDetails(focusedItem)}
+              {/* Action Buttons */}
+              <View style={styles.heroCtaRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => navigateToPlayer(activeHeroTitle)}
+                  style={({ hovered }: any) => [
+                    styles.primaryCtaBtn,
+                    hovered && styles.primaryCtaBtnHovered,
+                  ]}
                 >
-                  {({ isFocused: btnFocused }) => (
-                    <View style={[styles.heroBtn, styles.detailsBtn, btnFocused && styles.heroBtnFocused]}>
-                      <Text style={[styles.heroBtnText, btnFocused && styles.heroBtnTextFocused]}>
-                        ℹ More Details
-                      </Text>
-                    </View>
-                  )}
-                </SpatialNavigationFocusableView>
-              </View>
-            </SpatialNavigationNode>
-          </View>
-        </View>
+                  <Text style={styles.primaryCtaText}>▶ Play Now</Text>
+                </Pressable>
 
-        {/* Horizontal Content Rows */}
-        <SpatialNavigationScrollView
-          offsetFromStart={scaledPixels(40)}
-          style={styles.scrollContent}
-        >
-          {/* Continue Watching Row (Dynamically populated) */}
-          {continueWatching.length > 0 && (
-            <View style={styles.rowContainer}>
-              <View style={styles.rowHeader}>
-                <Text style={styles.rowTitle}>Continue Watching</Text>
-                <Text style={styles.rowBadge}>Resume from last scene</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    StorageService.toggleMyList(activeHeroTitle);
+                  }}
+                  style={({ hovered }: any) => [
+                    styles.secondaryCtaBtn,
+                    hovered && styles.secondaryCtaBtnHovered,
+                  ]}
+                >
+                  <Text style={styles.secondaryCtaText}>
+                    {StorageService.isInMyList(activeHeroTitle.id) ? '✓ In My List' : '+ Add to My List'}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => navigateToDetails(activeHeroTitle)}
+                  style={({ hovered }: any) => [
+                    styles.secondaryCtaBtn,
+                    hovered && styles.secondaryCtaBtnHovered,
+                  ]}
+                >
+                  <Text style={styles.secondaryCtaText}>ℹ Details</Text>
+                </Pressable>
               </View>
-              <SpatialNavigationNode orientation="horizontal">
-                <View style={styles.rowCards}>
-                  {continueWatching.map((p, idx) => {
-                    const title = allMovies.find((m) => String(m.id) === p.id) || VIEWEASE_CATALOG[0];
+
+              {/* Continuous Showcase Selector: 8 Title Pills */}
+              <View style={styles.heroCarouselSelector}>
+                <Text style={styles.selectorLabel}>FEATURED RELEASES ({heroIndex + 1}/8):</Text>
+                <View style={styles.selectorPillsRow}>
+                  {heroFeaturedTitles.map((t, idx) => {
+                    const isSelected = idx === heroIndex;
                     return (
-                      <View key={p.id} style={{ marginEnd: scaledPixels(20) }}>
-                        {renderCard({ item: title, index: idx }, p)}
-                      </View>
+                      <Pressable
+                        key={t.id}
+                        onPress={() => setHeroIndex(idx)}
+                        // @ts-ignore
+                        onMouseEnter={() => setHeroIndex(idx)}
+                        style={({ hovered }: any) => [
+                          styles.selectorPill,
+                          isSelected && styles.selectorPillActive,
+                          hovered && styles.selectorPillHovered,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.selectorPillText,
+                            isSelected && styles.selectorPillTextActive,
+                          ]}
+                        >
+                          {idx + 1}
+                        </Text>
+                      </Pressable>
                     );
                   })}
                 </View>
-              </SpatialNavigationNode>
+              </View>
             </View>
+
+            {/* Right Split Column: Cinematic Poster Card with Hover White Boundary */}
+            <View style={styles.heroRightCol}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigateToPlayer(activeHeroTitle)}
+                style={({ hovered }: any) => [
+                  styles.heroPreviewCard,
+                  hovered && styles.heroPreviewCardHovered,
+                ]}
+              >
+                <Image
+                  source={{ uri: activeHeroTitle.posterImage || activeHeroTitle.headerImage }}
+                  style={styles.heroPreviewImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.heroPreviewOverlay}>
+                  <View style={styles.heroPlayCircle}>
+                    <Text style={styles.heroPlayIcon}>▶</Text>
+                  </View>
+                  <Text style={styles.heroPreviewTitle} numberOfLines={1}>
+                    {activeHeroTitle.title}
+                  </Text>
+                  <Text style={styles.heroPreviewHint}>Click to Stream in 4K UHD</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Left / Right Carousel Arrow Buttons for Laptop Mouse Users */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Previous featured movie"
+            onPress={() =>
+              setHeroIndex((prev) => (prev === 0 ? heroFeaturedTitles.length - 1 : prev - 1))
+            }
+            style={({ hovered }: any) => [
+              styles.heroArrowBtn,
+              styles.heroArrowLeft,
+              hovered && styles.heroArrowBtnHovered,
+            ]}
+          >
+            <Text style={styles.heroArrowText}>‹</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Next featured movie"
+            onPress={() => setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length)}
+            style={({ hovered }: any) => [
+              styles.heroArrowBtn,
+              styles.heroArrowRight,
+              hovered && styles.heroArrowBtnHovered,
+            ]}
+          >
+            <Text style={styles.heroArrowText}>›</Text>
+          </Pressable>
+        </View>
+
+        {/* 3. Horizontal Content Rows with "View All →" and Scrolling Arrows */}
+        <View style={styles.rowsWrapper}>
+          {/* Continue Watching (Only shown if active progress exists) */}
+          {continueWatching.length > 0 && (
+            <CategoryRow
+              rowKey="continue"
+              title="Continue Watching"
+              subtitle="Pick up exactly where you left off"
+              movies={continueWatching.map((p) => {
+                const found = allMovies.find((m) => String(m.id) === p.id);
+                return found || allMovies[0];
+              })}
+              progressMap={continueWatching}
+              onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)}
+              onViewAll={() =>
+                openViewAll(
+                  'Continue Watching',
+                  continueWatching.map((p) => allMovies.find((m) => String(m.id) === p.id) || allMovies[0]),
+                )
+              }
+              rowRef={(el) => {
+                rowRefs.current['continue'] = el;
+              }}
+              onScrollLeft={() => scrollRow('continue', 'left')}
+              onScrollRight={() => scrollRow('continue', 'right')}
+            />
           )}
 
-          {/* Trending Row */}
-          <View style={styles.rowContainer}>
-            <View style={styles.rowHeader}>
-              <Text style={styles.rowTitle}>Trending Now</Text>
-              <Text style={styles.rowBadge}>Top picks today</Text>
-            </View>
-            <SpatialNavigationNode orientation="horizontal">
-              <View style={styles.rowCards}>
-                {trendingMovies.map((item, idx) => (
-                  <View key={String(item.id)} style={{ marginEnd: scaledPixels(20) }}>
-                    {renderCard({ item, index: idx })}
-                  </View>
-                ))}
-              </View>
-            </SpatialNavigationNode>
-          </View>
+          {/* Trending Web Series */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Web Series') && (
+            <CategoryRow
+              rowKey="web-series"
+              title="Trending Web Series"
+              subtitle="Bingeworthy multi-episode sagas"
+              movies={trendingWebSeries}
+              onCardPress={navigateToDetails}
+              onViewAll={() => openViewAll('Trending Web Series', trendingWebSeries)}
+              rowRef={(el) => {
+                rowRefs.current['web-series'] = el;
+              }}
+              onScrollLeft={() => scrollRow('web-series', 'left')}
+              onScrollRight={() => scrollRow('web-series', 'right')}
+            />
+          )}
 
-          {/* ViewEase Originals Row */}
-          <View style={styles.rowContainer}>
-            <View style={styles.rowHeader}>
-              <Text style={styles.rowTitle}>ViewEase Originals</Text>
-              <Text style={styles.rowBadge}>Contextual viewing enabled</Text>
-            </View>
-            <SpatialNavigationNode orientation="horizontal">
-              <View style={styles.rowCards}>
-                {originalMovies.map((item, idx) => (
-                  <View key={String(item.id)} style={{ marginEnd: scaledPixels(20) }}>
-                    {renderCard({ item, index: idx })}
-                  </View>
-                ))}
-              </View>
-            </SpatialNavigationNode>
-          </View>
+          {/* Blockbuster Movies */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Movies') && (
+            <CategoryRow
+              rowKey="movies"
+              title="Blockbuster Movies"
+              subtitle="Feature films in 4K HDR & Dolby Atmos"
+              movies={blockbusterMovies}
+              onCardPress={navigateToDetails}
+              onViewAll={() => openViewAll('Blockbuster Movies', blockbusterMovies)}
+              rowRef={(el) => {
+                rowRefs.current['movies'] = el;
+              }}
+              onScrollLeft={() => scrollRow('movies', 'left')}
+              onScrollRight={() => scrollRow('movies', 'right')}
+            />
+          )}
 
-          {/* Documentaries Row */}
-          <View style={styles.rowContainer}>
-            <View style={styles.rowHeader}>
-              <Text style={styles.rowTitle}>Nature & Science</Text>
-              <Text style={styles.rowBadge}>4K Ultra HD</Text>
+          {/* Cartoons & Animation */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Cartoons & Animation') && (
+            <CategoryRow
+              rowKey="cartoons"
+              title="Cartoons & Animation"
+              subtitle="Anime epics & family friendly adventures"
+              movies={cartoonsAndAnime}
+              onCardPress={navigateToDetails}
+              onViewAll={() => openViewAll('Cartoons & Animation', cartoonsAndAnime)}
+              rowRef={(el) => {
+                rowRefs.current['cartoons'] = el;
+              }}
+              onScrollLeft={() => scrollRow('cartoons', 'left')}
+              onScrollRight={() => scrollRow('cartoons', 'right')}
+            />
+          )}
+
+          {/* Sci-Fi & Cyberpunk */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Sci-Fi') && (
+            <CategoryRow
+              rowKey="scifi"
+              title="Sci-Fi & Cyberpunk"
+              subtitle="Interstellar mysteries and synthetic realities"
+              movies={sciFiAndCyberpunk}
+              onCardPress={navigateToDetails}
+              onViewAll={() => openViewAll('Sci-Fi & Cyberpunk', sciFiAndCyberpunk)}
+              rowRef={(el) => {
+                rowRefs.current['scifi'] = el;
+              }}
+              onScrollLeft={() => scrollRow('scifi', 'left')}
+              onScrollRight={() => scrollRow('scifi', 'right')}
+            />
+          )}
+
+          {/* Documentaries */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Documentaries') && (
+            <CategoryRow
+              rowKey="docs"
+              title="Nature & Space Documentaries"
+              subtitle="Real scientific discoveries and cosmic horizons"
+              movies={documentaries}
+              onCardPress={navigateToDetails}
+              onViewAll={() => openViewAll('Nature & Space Documentaries', documentaries)}
+              rowRef={(el) => {
+                rowRefs.current['docs'] = el;
+              }}
+              onScrollLeft={() => scrollRow('docs', 'left')}
+              onScrollRight={() => scrollRow('docs', 'right')}
+            />
+          )}
+        </View>
+      </ScrollView>
+
+      {/* 4. "View All" Full Category Grid Modal */}
+      <Modal
+        visible={viewAllModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setViewAllModalVisible(false)}
+      >
+        <View style={styles.viewAllBackdrop}>
+          <View style={styles.viewAllCard}>
+            {/* Modal Header */}
+            <View style={styles.viewAllHeader}>
+              <View>
+                <Text style={styles.viewAllCategoryTitle}>{viewAllCategoryName}</Text>
+                <Text style={styles.viewAllSub}>
+                  Showing all {viewAllMovies.length} titles in this collection
+                </Text>
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setViewAllModalVisible(false)}
+                style={({ hovered }: any) => [
+                  styles.closeViewAllBtn,
+                  hovered && styles.closeViewAllBtnHovered,
+                ]}
+              >
+                <Text style={styles.closeViewAllText}>✕ Close</Text>
+              </Pressable>
             </View>
-            <SpatialNavigationNode orientation="horizontal">
-              <View style={styles.rowCards}>
-                {documentaries.map((item, idx) => (
-                  <View key={String(item.id)} style={{ marginEnd: scaledPixels(20) }}>
-                    {renderCard({ item, index: idx })}
+
+            {/* Grid of Movie Cards */}
+            <ScrollView
+              contentContainerStyle={styles.viewAllGridContent}
+              showsVerticalScrollIndicator={true}
+            >
+              <View style={styles.viewAllGrid}>
+                {viewAllMovies.map((movie) => (
+                  <View key={movie.id} style={styles.viewAllGridItem}>
+                    <MovieCard
+                      item={movie}
+                      onPress={() => {
+                        setViewAllModalVisible(false);
+                        navigateToDetails(movie);
+                      }}
+                    />
                   </View>
                 ))}
               </View>
-            </SpatialNavigationNode>
+            </ScrollView>
           </View>
-        </SpatialNavigationScrollView>
-      </View>
-    </SpatialNavigationRoot>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
+// Reusable Category Row with Header, "View All →", and Scrolling Arrows
+interface CategoryRowProps {
+  rowKey: string;
+  title: string;
+  subtitle: string;
+  movies: ViewEaseTitle[];
+  progressMap?: PlaybackProgress[];
+  onCardPress: (item: ViewEaseTitle, prog?: PlaybackProgress | null) => void;
+  onViewAll: () => void;
+  rowRef: (el: ScrollView | null) => void;
+  onScrollLeft: () => void;
+  onScrollRight: () => void;
+}
+
+const CategoryRow: React.FC<CategoryRowProps> = ({
+  title,
+  subtitle,
+  movies,
+  progressMap,
+  onCardPress,
+  onViewAll,
+  rowRef,
+  onScrollLeft,
+  onScrollRight,
+}) => {
+  return (
+    <View style={styles.rowSection}>
+      {/* Row Header with Category Title & "View All →" button */}
+      <View style={styles.rowHeader}>
+        <View style={styles.rowTitleWrapper}>
+          <Text style={styles.rowTitle}>{title}</Text>
+          <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        </View>
+
+        <View style={styles.rowHeaderActions}>
+          {/* Scroll Arrows for Laptop Users */}
+          <View style={styles.scrollArrowsGroup}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scroll row left"
+              onPress={onScrollLeft}
+              style={({ hovered }: any) => [
+                styles.rowArrowBtn,
+                hovered && styles.rowArrowBtnHovered,
+              ]}
+            >
+              <Text style={styles.rowArrowText}>‹</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scroll row right"
+              onPress={onScrollRight}
+              style={({ hovered }: any) => [
+                styles.rowArrowBtn,
+                hovered && styles.rowArrowBtnHovered,
+              ]}
+            >
+              <Text style={styles.rowArrowText}>›</Text>
+            </Pressable>
+          </View>
+
+          {/* View All Button */}
+          <Pressable
+            accessibilityRole="button"
+            onPress={onViewAll}
+            style={({ hovered }: any) => [
+              styles.viewAllBtn,
+              hovered && styles.viewAllBtnHovered,
+            ]}
+          >
+            <Text style={styles.viewAllText}>View All →</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Horizontal Carousel */}
+      <ScrollView
+        ref={rowRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.rowCardsContainer}
+      >
+        {movies.map((item) => {
+          const prog = progressMap?.find((p) => p.id === item.id) || null;
+          return (
+            <View key={item.id} style={styles.cardItemWrapper}>
+              <MovieCard
+                item={item}
+                progress={prog}
+                onPress={() => onCardPress(item, prog)}
+              />
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
-  container: {
+  rootScreen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0B0D11',
   },
-  header: {
-    height: scaledPixels(500),
+  mainScrollView: {
+    flex: 1,
+  },
+  mainScrollContent: {
+    paddingBottom: 60,
+  },
+
+  // Split-Screen Hero Showcase Styles
+  heroShowcaseContainer: {
     width: '100%',
+    minHeight: 520,
     position: 'relative',
-    justifyContent: 'flex-end',
+    backgroundColor: '#0D0F14',
+    overflow: 'hidden',
+    justifyContent: 'center',
   },
-  headerImage: {
+  heroBackdropImage: {
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
+    opacity: 0.55,
   },
-  gradientLeft: {
+  heroGradientLeft: {
     position: 'absolute',
-    top: 0,
     left: 0,
+    top: 0,
     bottom: 0,
     width: '70%',
   },
-  gradientBottom: {
+  heroGradientBottom: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: scaledPixels(180),
+    height: 180,
   },
-  headerContent: {
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingBottom: scaledPixels(28),
-    maxWidth: '65%',
-    zIndex: 10,
-  },
-  badgeRow: {
+  heroSplitContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scaledPixels(12),
+    justifyContent: 'space-between',
+    paddingHorizontal: 48,
+    paddingVertical: 36,
+    zIndex: 10,
     flexWrap: 'wrap',
+    gap: 24,
   },
-  brandBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
+  heroLeftCol: {
+    flex: 1.3,
+    minWidth: 320,
+    justifyContent: 'center',
   },
-  brandBadgeText: {
-    color: colors.textOnPrimary,
-    fontSize: scaledPixels(12),
+  heroBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  spotlightBadge: {
+    backgroundColor: 'rgba(229, 169, 60, 0.25)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  spotlightBadgeText: {
+    fontSize: 11,
     fontWeight: '800',
+    color: colors.primary,
     letterSpacing: 1,
   },
-  metaBadge: {
-    backgroundColor: colors.cardElevated,
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.border,
+  categoryPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  metaBadgeText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(13),
+  categoryPillText: {
+    fontSize: 11,
+    color: colors.text,
     fontWeight: '600',
   },
-  ratingBadge: {
-    backgroundColor: 'rgba(229, 169, 60, 0.2)',
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.badgeBorder,
+  yearPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  ratingText: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(13),
+  yearPillText: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  contentRatingPill: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  contentRatingPillText: {
+    fontSize: 10,
+    color: colors.text,
     fontWeight: '700',
   },
   assistPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(52, 199, 89, 0.15)',
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    borderWidth: scaledPixels(1),
-    borderColor: 'rgba(52, 199, 89, 0.4)',
+    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 152, 219, 0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   assistPillIcon: {
-    fontSize: scaledPixels(12),
-    marginEnd: scaledPixels(4),
+    fontSize: 10,
+    color: '#3498db',
+    marginRight: 4,
   },
   assistPillText: {
-    color: colors.success,
-    fontSize: scaledPixels(12),
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  heroTitle: {
-    color: colors.text,
-    fontSize: scaledPixels(44),
-    fontWeight: '800',
-    marginBottom: scaledPixels(10),
+    color: '#3498db',
     letterSpacing: 0.5,
   },
-  heroDescription: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(18),
-    lineHeight: scaledPixels(26),
-    marginBottom: scaledPixels(20),
+  heroTitle: {
+    fontSize: 38,
+    fontWeight: '900',
+    color: colors.text,
+    lineHeight: 46,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
-  heroActionsRow: {
+  heroTagline: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: colors.primary,
+    marginBottom: 12,
+  },
+  heroDescription: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: 'rgba(240, 243, 248, 0.85)',
+    maxWidth: 620,
+    marginBottom: 24,
+  },
+  heroCtaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
   },
-  heroBtn: {
-    paddingVertical: scaledPixels(12),
-    paddingHorizontal: scaledPixels(26),
-    borderRadius: scaledPixels(8),
-    marginEnd: scaledPixels(16),
-    borderWidth: scaledPixels(2),
-    borderColor: 'transparent',
+  primaryCtaBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  primaryCtaBtnHovered: {
+    backgroundColor: '#F5BE58',
+    // @ts-ignore
+    boxShadow: '0 0 20px rgba(229, 169, 60, 0.7)',
+    transform: [{ scale: 1.04 }],
+  },
+  primaryCtaText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0B0D11',
+    letterSpacing: 0.5,
+  },
+  secondaryCtaBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  secondaryCtaBtnHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#FFFFFF',
+    transform: [{ scale: 1.04 }],
+  },
+  secondaryCtaText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  heroCarouselSelector: {
+    marginTop: 6,
+  },
+  selectorLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  selectorPillsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  selectorPill: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  selectorPillActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  selectorPillHovered: {
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  selectorPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  selectorPillTextActive: {
+    color: '#0B0D11',
+    fontWeight: '900',
+  },
+
+  // Right Hero Column: Preview Card
+  heroRightCol: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 280,
   },
-  playBtn: {
-    backgroundColor: colors.primary,
+  heroPreviewCard: {
+    width: 380,
+    maxWidth: '100%',
+    height: 230,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  detailsBtn: {
-    backgroundColor: colors.cardElevated,
-    borderColor: colors.border,
-  },
-  heroBtnFocused: {
-    backgroundColor: colors.primaryLight,
+  heroPreviewCardHovered: {
+    borderWidth: 3,
     borderColor: '#FFFFFF',
-    transform: [{ scale: 1.06 }],
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: scaledPixels(12),
-    elevation: 8,
+    // @ts-ignore
+    boxShadow: '0 0 25px rgba(255, 255, 255, 0.5)',
+    transform: [{ scale: 1.05 }],
   },
-  heroBtnText: {
+  heroPreviewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroPreviewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(11, 13, 17, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  heroPlayCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(229, 169, 60, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+  },
+  heroPlayIcon: {
+    fontSize: 22,
+    color: '#0B0D11',
+    marginLeft: 3,
+  },
+  heroPreviewTitle: {
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(18),
+    textAlign: 'center',
+  },
+  heroPreviewHint: {
+    fontSize: 11,
+    color: colors.primary,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+
+  // Carousel Arrow Buttons for Laptop
+  heroArrowBtn: {
+    position: 'absolute',
+    top: '46%',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(13, 15, 20, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  heroArrowLeft: {
+    left: 14,
+  },
+  heroArrowRight: {
+    right: 14,
+  },
+  heroArrowBtnHovered: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  heroArrowText: {
+    fontSize: 28,
+    color: colors.text,
+    lineHeight: 30,
     fontWeight: '700',
   },
-  playBtnText: {
-    color: colors.textOnPrimary,
+
+  // Category Rows Wrapper
+  rowsWrapper: {
+    paddingTop: 16,
   },
-  heroBtnTextFocused: {
-    color: colors.textOnPrimary,
-  },
-  scrollContent: {
-    flex: 1,
-    paddingTop: scaledPixels(10),
-  },
-  rowContainer: {
-    marginBottom: scaledPixels(32),
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
+  rowSection: {
+    marginBottom: 32,
   },
   rowHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scaledPixels(14),
+    justifyContent: 'space-between',
+    paddingHorizontal: 48,
+    marginBottom: 14,
+  },
+  rowTitleWrapper: {
+    flex: 1,
   },
   rowTitle: {
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(24),
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginEnd: scaledPixels(12),
+    letterSpacing: 0.4,
   },
-  rowBadge: {
-    color: colors.textTertiary,
-    fontSize: scaledPixels(14),
-    fontWeight: '500',
+  rowSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
   },
-  rowCards: {
+  rowHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
-  cardContainer: {
-    width: scaledPixels(320),
-    height: scaledPixels(180),
-    borderRadius: scaledPixels(10),
-    overflow: 'hidden',
-    backgroundColor: colors.card,
-    borderWidth: scaledPixels(3),
-    borderColor: 'transparent',
+  scrollArrowsGroup: {
+    flexDirection: 'row',
+    gap: 6,
   },
-  cardContainerFocused: {
+  rowArrowBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  rowArrowBtnHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: '#FFFFFF',
+  },
+  rowArrowText: {
+    fontSize: 20,
+    color: colors.text,
+    lineHeight: 22,
+    fontWeight: '800',
+  },
+  viewAllBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(229, 169, 60, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(229, 169, 60, 0.35)',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  viewAllBtnHovered: {
+    backgroundColor: 'rgba(229, 169, 60, 0.28)',
     borderColor: colors.primary,
+    // @ts-ignore
+    boxShadow: '0 0 12px rgba(229, 169, 60, 0.4)',
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.3,
+  },
+  rowCardsContainer: {
+    paddingHorizontal: 48,
+    gap: 18,
+  },
+  cardItemWrapper: {
+    marginRight: 4,
+  },
+
+  // Movie Card with White Boundary & Hover Elevation
+  cardContainer: {
+    width: 260,
+    height: 150,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#161B22',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  cardContainerHighlighted: {
+    // Exact White Boundary requested by user:
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 22px rgba(255, 255, 255, 0.55)',
     transform: [{ scale: 1.06 }],
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: scaledPixels(14),
-    elevation: 10,
+    zIndex: 50,
+  },
+  cardContainerPressed: {
+    transform: [{ scale: 1.02 }],
   },
   cardImage: {
     width: '100%',
     height: '100%',
   },
-  cardFocusedOverlay: {
+  cardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardInfoContainer: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(11, 13, 17, 0.88)',
-    paddingHorizontal: scaledPixels(12),
-    paddingVertical: scaledPixels(8),
+    bottom: 8,
+    left: 10,
+    right: 10,
   },
-  cardFocusedTitle: {
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.text,
-    fontWeight: '700',
-    fontSize: scaledPixels(15),
+    letterSpacing: 0.3,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  cardFocusedCategory: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(12),
+  cardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 3,
+  },
+  cardCategory: {
+    fontSize: 10,
+    color: colors.textMuted,
     fontWeight: '600',
-    marginTop: scaledPixels(2),
+  },
+  cardRating: {
+    fontSize: 10,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  whiteBoundaryGlow: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+  },
+  playBadgeFloating: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+  },
+  playBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#0B0D11',
   },
   progressContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: scaledPixels(5),
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   progressBar: {
     height: '100%',
     backgroundColor: colors.primary,
+  },
+
+  // "View All" Modal Styles
+  viewAllBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  viewAllCard: {
+    width: '94%',
+    maxHeight: '90%',
+    backgroundColor: '#12151C',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.9,
+    shadowRadius: 32,
+  },
+  viewAllHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  viewAllCategoryTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.text,
+  },
+  viewAllSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  closeViewAllBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  closeViewAllBtnHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: '#FFFFFF',
+  },
+  closeViewAllText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  viewAllGridContent: {
+    padding: 28,
+  },
+  viewAllGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+    justifyContent: 'flex-start',
+  },
+  viewAllGridItem: {
+    width: 260,
   },
 });

@@ -1,19 +1,13 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { StyleSheet, View, Image, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Image, Text, ScrollView, Pressable } from 'react-native';
 import { useNavigation, useRoute, RouteProp, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  SpatialNavigationRoot,
-  SpatialNavigationNode,
-  SpatialNavigationFocusableView,
-  DefaultFocus,
-} from 'react-tv-space-navigation';
-import { scaledPixels } from '../hooks/useScale';
 import { RootStackParamList } from '../navigation/types';
-import { safeZones, colors } from '../theme';
+import { colors } from '../theme';
 import PlatformLinearGradient from '../components/PlatformLinearGradient';
 import { getTitleById, VIEWEASE_CATALOG, ViewEaseTitle } from '../data/viewEaseCatalog';
 import { StorageService } from '../services/StorageService';
+import { TopNavigationBar } from '../components/TopNavigationBar';
 
 type DetailsScreenRouteProp = RouteProp<RootStackParamList, 'Details'>;
 type DetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Details'>;
@@ -45,6 +39,7 @@ export default function DetailsScreen() {
   const [inWatchlist, setInWatchlist] = useState<boolean>(() =>
     StorageService.isInWatchlist(catalogEntry.id),
   );
+  const [hoveredRelatedId, setHoveredRelatedId] = useState<string | null>(null);
 
   useEffect(() => {
     setInWatchlist(StorageService.isInWatchlist(catalogEntry.id));
@@ -80,36 +75,38 @@ export default function DetailsScreen() {
   }, [duration, catalogEntry.duration]);
 
   const relatedTitles = useMemo(() => {
-    return VIEWEASE_CATALOG.filter((t) => t.id !== catalogEntry.id).slice(0, 4);
+    return VIEWEASE_CATALOG.filter((t) => t.id !== catalogEntry.id).slice(0, 5);
   }, [catalogEntry.id]);
 
   return (
-    <SpatialNavigationRoot isActive={isFocused}>
-      <View style={styles.container}>
-        {/* Background Backdrop Artwork */}
-        <Image
-          source={{ uri: catalogEntry.headerImage || headerImage }}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
+    <View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar />
 
-        {/* Dual Gradients for Cinematic Readability */}
-        <PlatformLinearGradient
-          colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.85)', 'rgba(11,13,17,0.3)', 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradientLeft}
-        />
-        <PlatformLinearGradient
-          colors={['transparent', 'rgba(11,13,17,0.8)', colors.background]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.gradientBottom}
-        />
+      <ScrollView style={styles.mainScrollView} showsVerticalScrollIndicator={false}>
+        {/* Backdrop Banner */}
+        <View style={styles.backdropContainer}>
+          <Image
+            source={{ uri: catalogEntry.headerImage || headerImage }}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
 
-        {/* Details Content Container */}
-        <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.contentWrapper}>
+          <PlatformLinearGradient
+            colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.85)', 'rgba(11,13,17,0.3)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientLeft}
+          />
+          <PlatformLinearGradient
+            colors={['transparent', 'rgba(11,13,17,0.8)', '#0B0D11']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.gradientBottom}
+          />
+
+          {/* Details Content Overlay */}
+          <View style={styles.detailsContentWrapper}>
             {/* Badges Bar */}
             <View style={styles.badgeRow}>
               <View style={styles.originalBadge}>
@@ -138,7 +135,7 @@ export default function DetailsScreen() {
             {/* Title & Tagline */}
             <Text style={styles.title}>{title || catalogEntry.title}</Text>
             {catalogEntry.tagline ? (
-              <Text style={styles.tagline}>{catalogEntry.tagline}</Text>
+              <Text style={styles.tagline}>"{catalogEntry.tagline}"</Text>
             ) : null}
 
             {/* Genres */}
@@ -156,77 +153,51 @@ export default function DetailsScreen() {
             </Text>
 
             {/* Interactive Action Controls */}
-            <SpatialNavigationNode orientation="horizontal">
-              <View style={styles.actionsRow}>
-                <DefaultFocus>
-                  <SpatialNavigationFocusableView onSelect={() => navigateToPlayer(0)}>
-                    {({ isFocused: btnFocused }) => (
-                      <View
-                        style={[
-                          styles.actionBtn,
-                          styles.playBtn,
-                          btnFocused && styles.actionBtnFocused,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.actionBtnText,
-                            styles.playBtnText,
-                            btnFocused && styles.actionBtnTextFocused,
-                          ]}
-                        >
-                          ▶ Play Movie
-                        </Text>
-                      </View>
-                    )}
-                  </SpatialNavigationFocusableView>
-                </DefaultFocus>
+            <View style={styles.actionsRow}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigateToPlayer(0)}
+                style={({ hovered }: any) => [
+                  styles.actionBtn,
+                  styles.playBtn,
+                  hovered && styles.playBtnHovered,
+                ]}
+              >
+                <Text style={styles.playBtnText}>▶ Play Movie</Text>
+              </Pressable>
 
-                <SpatialNavigationFocusableView onSelect={toggleWatchlist}>
-                  {({ isFocused: btnFocused }) => (
-                    <View
-                      style={[
-                        styles.actionBtn,
-                        styles.watchlistBtn,
-                        inWatchlist && styles.inWatchlistBtn,
-                        btnFocused && styles.actionBtnFocused,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.actionBtnText,
-                          inWatchlist && styles.inWatchlistText,
-                          btnFocused && styles.actionBtnTextFocused,
-                        ]}
-                      >
-                        {inWatchlist ? '✓ In My List' : '➕ Add to My List'}
-                      </Text>
-                    </View>
-                  )}
-                </SpatialNavigationFocusableView>
+              <Pressable
+                accessibilityRole="button"
+                onPress={toggleWatchlist}
+                style={({ hovered }: any) => [
+                  styles.actionBtn,
+                  styles.watchlistBtn,
+                  inWatchlist && styles.inWatchlistBtn,
+                  hovered && styles.secondaryBtnHovered,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.secondaryBtnText,
+                    inWatchlist && styles.inWatchlistText,
+                  ]}
+                >
+                  {inWatchlist ? '✓ In My List' : '➕ Add to My List'}
+                </Text>
+              </Pressable>
 
-                <SpatialNavigationFocusableView onSelect={() => navigation.goBack()}>
-                  {({ isFocused: btnFocused }) => (
-                    <View
-                      style={[
-                        styles.actionBtn,
-                        styles.backBtn,
-                        btnFocused && styles.actionBtnFocused,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.actionBtnText,
-                          btnFocused && styles.actionBtnTextFocused,
-                        ]}
-                      >
-                        ← Back
-                      </Text>
-                    </View>
-                  )}
-                </SpatialNavigationFocusableView>
-              </View>
-            </SpatialNavigationNode>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigation.goBack()}
+                style={({ hovered }: any) => [
+                  styles.actionBtn,
+                  styles.backBtn,
+                  hovered && styles.secondaryBtnHovered,
+                ]}
+              >
+                <Text style={styles.secondaryBtnText}>← Back</Text>
+              </Pressable>
+            </View>
 
             {/* Production & Cast Metadata Panel */}
             <View style={styles.crewCard}>
@@ -247,79 +218,92 @@ export default function DetailsScreen() {
                 <Text style={styles.crewValue}>English (Dolby 5.1), Hindi • English [CC], Hindi</Text>
               </View>
             </View>
-
-            {/* Related Titles Section */}
-            <View style={styles.relatedSection}>
-              <Text style={styles.relatedHeading}>MORE LIKE THIS</Text>
-              <SpatialNavigationNode orientation="horizontal">
-                <View style={styles.relatedGrid}>
-                  {relatedTitles.map((item) => (
-                    <SpatialNavigationFocusableView
-                      key={item.id}
-                      onSelect={() => {
-                        navigation.navigate('Details', {
-                          title: item.title,
-                          description: item.description,
-                          headerImage: item.headerImage,
-                          movie: item.movie,
-                          category: item.category,
-                          genres: item.genres,
-                          releaseYear: item.releaseYear,
-                          rating: item.rating,
-                          ratingCount: item.ratingCount,
-                          contentRating: item.contentRating,
-                          duration: item.duration,
-                        });
-                      }}
-                    >
-                      {({ isFocused: cardFocused }) => (
-                        <View
-                          style={[
-                            styles.relatedCard,
-                            cardFocused && styles.relatedCardFocused,
-                          ]}
-                        >
-                          <Image
-                            source={{ uri: item.headerImage }}
-                            style={styles.relatedImage}
-                            resizeMode="cover"
-                          />
-                          <View style={styles.relatedOverlay}>
-                            <Text style={styles.relatedTitle} numberOfLines={1}>
-                              {item.title}
-                            </Text>
-                            <Text style={styles.relatedRating}>★ {item.rating}</Text>
-                          </View>
-                        </View>
-                      )}
-                    </SpatialNavigationFocusableView>
-                  ))}
-                </View>
-              </SpatialNavigationNode>
-            </View>
           </View>
-        </ScrollView>
-      </View>
-    </SpatialNavigationRoot>
+        </View>
+
+        {/* Related Titles Carousel */}
+        <View style={styles.relatedSection}>
+          <Text style={styles.relatedHeading}>More Like This</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRow}>
+            {relatedTitles.map((item) => {
+              const isHovered = hoveredRelatedId === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    navigation.navigate('Details', {
+                      title: item.title,
+                      description: item.description,
+                      headerImage: item.headerImage,
+                      movie: item.movie,
+                      category: item.category,
+                      genres: item.genres,
+                      releaseYear: item.releaseYear,
+                      rating: item.rating,
+                      ratingCount: item.ratingCount,
+                      contentRating: item.contentRating,
+                      duration: item.duration,
+                    });
+                  }}
+                  // @ts-ignore
+                  onMouseEnter={() => setHoveredRelatedId(item.id)}
+                  onMouseLeave={() => setHoveredRelatedId(null)}
+                  style={({ pressed }: any) => [
+                    styles.relatedCard,
+                    isHovered && styles.relatedCardHovered,
+                    pressed && styles.relatedCardPressed,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: item.headerImage || item.posterImage }}
+                    style={styles.relatedImage}
+                    resizeMode="cover"
+                  />
+                  <PlatformLinearGradient
+                    colors={['transparent', 'rgba(11, 13, 17, 0.95)']}
+                    start={{ x: 0, y: 0.4 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.cardGradient}
+                  />
+                  <View style={styles.relatedInfo}>
+                    <Text style={styles.relatedTitle} numberOfLines={1}>{item.title}</Text>
+                    <Text style={styles.relatedMeta}>{item.category} • ★ {item.rating}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootScreen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0B0D11',
+  },
+  mainScrollView: {
+    flex: 1,
+  },
+  backdropContainer: {
+    width: '100%',
+    minHeight: 560,
+    position: 'relative',
+    backgroundColor: '#0D0F14',
   },
   backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '65%',
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    opacity: 0.5,
   },
   gradientLeft: {
     position: 'absolute',
-    top: 0,
     left: 0,
+    top: 0,
     bottom: 0,
     width: '75%',
   },
@@ -328,254 +312,251 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: scaledPixels(160),
+    height: 140,
   },
-  scrollContent: {
-    flex: 1,
-  },
-  contentWrapper: {
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingTop: scaledPixels(safeZones.titleSafe.vertical),
-    paddingBottom: scaledPixels(safeZones.actionSafe.vertical + 40),
-    maxWidth: '65%',
+  detailsContentWrapper: {
+    paddingHorizontal: 48,
+    paddingTop: 36,
+    paddingBottom: 24,
+    maxWidth: 820,
+    zIndex: 10,
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scaledPixels(14),
     flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
   },
   originalBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
+    backgroundColor: 'rgba(229, 169, 60, 0.25)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   originalBadgeText: {
-    color: colors.textOnPrimary,
+    fontSize: 11,
     fontWeight: '800',
-    fontSize: scaledPixels(12),
+    color: colors.primary,
     letterSpacing: 1,
   },
   metaBadge: {
-    backgroundColor: colors.cardElevated,
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   metaBadgeText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(13),
+    fontSize: 11,
+    color: colors.textMuted,
     fontWeight: '600',
   },
   ratingBadge: {
-    backgroundColor: 'rgba(229, 169, 60, 0.2)',
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    marginEnd: scaledPixels(10),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.badgeBorder,
+    backgroundColor: 'rgba(229, 169, 60, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   ratingText: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(13),
+    fontSize: 11,
+    color: colors.primary,
     fontWeight: '700',
   },
   assistPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(52, 199, 89, 0.15)',
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(4),
-    borderWidth: scaledPixels(1),
-    borderColor: 'rgba(52, 199, 89, 0.4)',
+    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 152, 219, 0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   assistPillIcon: {
-    fontSize: scaledPixels(12),
-    marginEnd: scaledPixels(4),
+    fontSize: 10,
+    color: '#3498db',
+    marginRight: 4,
   },
   assistPillText: {
-    color: colors.success,
-    fontSize: scaledPixels(12),
+    fontSize: 10,
     fontWeight: '800',
+    color: '#3498db',
+    letterSpacing: 0.5,
   },
   title: {
+    fontSize: 42,
+    fontWeight: '900',
     color: colors.text,
-    fontSize: scaledPixels(52),
-    fontWeight: '800',
+    lineHeight: 50,
     letterSpacing: 0.5,
-    marginBottom: scaledPixels(8),
+    marginBottom: 6,
   },
   tagline: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(20),
-    fontWeight: '500',
+    fontSize: 15,
     fontStyle: 'italic',
-    marginBottom: scaledPixels(16),
+    color: colors.primary,
+    marginBottom: 14,
   },
   genresRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: scaledPixels(18),
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
   },
   genrePill: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: scaledPixels(12),
-    paddingVertical: scaledPixels(4),
-    borderRadius: scaledPixels(6),
-    marginEnd: scaledPixels(8),
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
   },
   genrePillText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(13),
-    fontWeight: '600',
+    fontSize: 11,
+    color: colors.textMuted,
   },
   synopsis: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(19),
-    lineHeight: scaledPixels(28),
-    marginBottom: scaledPixels(26),
+    fontSize: 15,
+    lineHeight: 24,
+    color: 'rgba(240, 243, 248, 0.9)',
+    marginBottom: 24,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scaledPixels(32),
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 28,
   },
   actionBtn: {
-    paddingVertical: scaledPixels(14),
-    paddingHorizontal: scaledPixels(24),
-    borderRadius: scaledPixels(8),
-    marginEnd: scaledPixels(14),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
   },
   playBtn: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
-  watchlistBtn: {
-    backgroundColor: colors.cardElevated,
-  },
-  inWatchlistBtn: {
-    borderColor: colors.primaryLight,
-    backgroundColor: 'rgba(229, 169, 60, 0.15)',
-  },
-  backBtn: {
-    backgroundColor: 'transparent',
-    borderColor: colors.borderLight,
-  },
-  actionBtnFocused: {
-    backgroundColor: colors.primaryLight,
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.06 }],
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: scaledPixels(12),
-    elevation: 8,
-  },
-  actionBtnText: {
-    color: colors.text,
-    fontSize: scaledPixels(17),
-    fontWeight: '700',
+  playBtnHovered: {
+    backgroundColor: '#F5BE58',
+    // @ts-ignore
+    boxShadow: '0 0 20px rgba(229, 169, 60, 0.7)',
+    transform: [{ scale: 1.04 }],
   },
   playBtnText: {
-    color: colors.textOnPrimary,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0B0D11',
+  },
+  watchlistBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  inWatchlistBtn: {
+    backgroundColor: 'rgba(229, 169, 60, 0.2)',
+    borderColor: colors.primary,
+  },
+  backBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  secondaryBtnHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#FFFFFF',
+    transform: [{ scale: 1.04 }],
+  },
+  secondaryBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
   },
   inWatchlistText: {
-    color: colors.primaryLight,
-  },
-  actionBtnTextFocused: {
-    color: colors.textOnPrimary,
+    color: colors.primary,
   },
   crewCard: {
-    backgroundColor: colors.card,
-    borderRadius: scaledPixels(12),
-    padding: scaledPixels(18),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.border,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: scaledPixels(32),
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 20,
   },
   crewColumn: {
     flex: 1,
-    marginEnd: scaledPixels(16),
   },
   crewLabel: {
-    color: colors.textTertiary,
-    fontSize: scaledPixels(12),
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    marginBottom: scaledPixels(6),
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    marginBottom: 4,
   },
   crewValue: {
+    fontSize: 12,
     color: colors.text,
-    fontSize: scaledPixels(15),
-    lineHeight: scaledPixels(22),
-    fontWeight: '500',
+    lineHeight: 18,
   },
   relatedSection: {
-    marginTop: scaledPixels(10),
+    paddingHorizontal: 48,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
   relatedHeading: {
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(20),
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: scaledPixels(14),
+    marginBottom: 16,
   },
-  relatedGrid: {
-    flexDirection: 'row',
+  relatedRow: {
+    gap: 16,
   },
   relatedCard: {
-    width: scaledPixels(240),
-    height: scaledPixels(135),
-    borderRadius: scaledPixels(8),
+    width: 250,
+    height: 144,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.card,
-    marginEnd: scaledPixels(16),
-    borderWidth: scaledPixels(2),
+    position: 'relative',
+    backgroundColor: '#161B22',
+    borderWidth: 2,
     borderColor: 'transparent',
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  relatedCardFocused: {
-    borderColor: colors.primary,
+  relatedCardHovered: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 20px rgba(255, 255, 255, 0.55)',
     transform: [{ scale: 1.06 }],
+  },
+  relatedCardPressed: {
+    transform: [{ scale: 1.02 }],
   },
   relatedImage: {
     width: '100%',
     height: '100%',
   },
-  relatedOverlay: {
+  cardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  relatedInfo: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(11, 13, 17, 0.9)',
-    paddingHorizontal: scaledPixels(10),
-    paddingVertical: scaledPixels(6),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    bottom: 8,
+    left: 10,
+    right: 10,
   },
   relatedTitle: {
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(13),
-    fontWeight: '600',
-    flex: 1,
   },
-  relatedRating: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(12),
-    fontWeight: '700',
-    marginStart: scaledPixels(6),
+  relatedMeta: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });

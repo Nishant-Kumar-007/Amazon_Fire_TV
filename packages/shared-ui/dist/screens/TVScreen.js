@@ -32,24 +32,24 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = TVScreen;
 const react_1 = __importStar(require("react"));
 const react_native_1 = require("react-native");
 const native_1 = require("@react-navigation/native");
-const react_tv_space_navigation_1 = require("react-tv-space-navigation");
-const useScale_1 = require("../hooks/useScale");
-const MenuContext_1 = require("../components/MenuContext");
 const theme_1 = require("../theme");
-const rtl_1 = require("../utils/rtl");
 const StorageService_1 = require("../services/StorageService");
 const viewEaseCatalog_1 = require("../data/viewEaseCatalog");
+const TopNavigationBar_1 = require("../components/TopNavigationBar");
+const PlatformLinearGradient_1 = __importDefault(require("../components/PlatformLinearGradient"));
 function TVScreen() {
     const navigation = (0, native_1.useNavigation)();
-    const { isOpen: isMenuOpen, toggleMenu } = (0, MenuContext_1.useMenuContext)();
     const isFocused = (0, native_1.useIsFocused)();
-    const isActive = isFocused && !isMenuOpen;
     const [watchlistIds, setWatchlistIds] = (0, react_1.useState)(() => StorageService_1.StorageService.getWatchlist());
+    const [hoveredCardId, setHoveredCardId] = (0, react_1.useState)(null);
     (0, react_1.useEffect)(() => {
         const update = () => setWatchlistIds(StorageService_1.StorageService.getWatchlist());
         update();
@@ -61,12 +61,6 @@ function TVScreen() {
             .map((id) => viewEaseCatalog_1.VIEWEASE_CATALOG.find((t) => t.id === id))
             .filter((t) => !!t);
     }, [watchlistIds]);
-    const onDirectionHandledWithoutMovement = (0, react_1.useCallback)((movement) => {
-        if (movement === (0, rtl_1.getOpenDrawerDirection)()) {
-            navigation.dispatch(native_1.DrawerActions.openDrawer());
-            toggleMenu(true);
-        }
-    }, [toggleMenu, navigation]);
     const navigateToDetails = (0, react_1.useCallback)((item) => {
         navigation.navigate('Details', {
             title: item.title,
@@ -93,277 +87,243 @@ function TVScreen() {
     const handleRemove = (0, react_1.useCallback)((id) => {
         StorageService_1.StorageService.toggleWatchlist(id);
     }, []);
-    return (<react_tv_space_navigation_1.SpatialNavigationRoot isActive={isActive} onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}>
-      <react_native_1.View style={styles.container}>
-        {/* Header */}
-        <react_native_1.View style={styles.header}>
-          <react_native_1.Text style={styles.headerTitle}>My List & Saved Watchlist</react_native_1.Text>
+    return (<react_native_1.View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar_1.TopNavigationBar activeTab="TV"/>
+
+      <react_native_1.ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <react_native_1.View style={styles.headerSection}>
+          <react_native_1.Text style={styles.headerTitle}>My Saved Watchlist</react_native_1.Text>
           <react_native_1.Text style={styles.headerSubtitle}>
-            Your personalized queue of movies, series, and contextual documentaries ({savedTitles.length} items)
+            Your personalized queue of movies, web series, and anime ({savedTitles.length} saved)
           </react_native_1.Text>
         </react_native_1.View>
 
         {savedTitles.length === 0 ? (<react_native_1.View style={styles.emptyContainer}>
-            <react_native_1.Text style={styles.emptyIcon}>🎬</react_native_1.Text>
-            <react_native_1.Text style={styles.emptyTitle}>Your Watchlist is Empty</react_native_1.Text>
+            <react_native_1.Text style={styles.emptyIcon}>🔖</react_native_1.Text>
+            <react_native_1.Text style={styles.emptyTitle}>Your watchlist is empty</react_native_1.Text>
             <react_native_1.Text style={styles.emptySubtitle}>
-              Explore our cinematic library and press "Add to My List" on any title.
+              Explore our cinematic catalog and click "+ Add to My List" to build your queue.
             </react_native_1.Text>
-            <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-              <react_tv_space_navigation_1.DefaultFocus>
-                <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigation.navigate('Home')}>
-                  {({ isFocused: btnFocused }) => (<react_native_1.View style={[styles.exploreBtn, btnFocused && styles.exploreBtnFocused]}>
-                      <react_native_1.Text style={[styles.exploreBtnText, btnFocused && styles.exploreBtnTextFocused]}>
-                        Browse Featured Titles
+            <react_native_1.Pressable accessibilityRole="button" onPress={() => navigation.navigate('Home')} style={({ hovered }) => [
+                styles.browseBtn,
+                hovered && styles.browseBtnHovered,
+            ]}>
+              <react_native_1.Text style={styles.browseBtnText}>Explore Home Screen</react_native_1.Text>
+            </react_native_1.Pressable>
+          </react_native_1.View>) : (<react_native_1.View style={styles.gridContainer}>
+            {savedTitles.map((item) => {
+                const isHovered = hoveredCardId === item.id;
+                return (<react_native_1.View key={item.id} style={[
+                        styles.cardWrapper,
+                        isHovered && styles.cardWrapperHovered,
+                    ]} 
+                // @ts-ignore
+                onMouseEnter={() => setHoveredCardId(item.id)} onMouseLeave={() => setHoveredCardId(null)}>
+                  <react_native_1.Pressable style={styles.cardPressable} onPress={() => navigateToDetails(item)}>
+                    <react_native_1.Image source={{ uri: item.headerImage || item.posterImage }} style={styles.cardImage} resizeMode="cover"/>
+
+                    <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11, 13, 17, 0.95)']} start={{ x: 0, y: 0.4 }} end={{ x: 0, y: 1 }} style={styles.cardGradient}/>
+
+                    <react_native_1.View style={styles.cardInfo}>
+                      <react_native_1.Text style={styles.cardTitle} numberOfLines={1}>
+                        {item.title}
                       </react_native_1.Text>
-                    </react_native_1.View>)}
-                </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-              </react_tv_space_navigation_1.DefaultFocus>
-            </react_tv_space_navigation_1.SpatialNavigationNode>
-          </react_native_1.View>) : (<react_native_1.ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <react_tv_space_navigation_1.SpatialNavigationNode orientation="vertical">
-              <react_native_1.View style={styles.cardList}>
-                {savedTitles.map((title, idx) => (<react_native_1.View key={title.id} style={styles.savedCardRow}>
-                    <react_native_1.Image source={{ uri: title.headerImage }} style={styles.cardThumb} resizeMode="cover"/>
-                    <react_native_1.View style={styles.cardMeta}>
-                      <react_native_1.View style={styles.cardMetaHeader}>
-                        <react_native_1.Text style={styles.cardTitle}>{title.title}</react_native_1.Text>
-                        <react_native_1.View style={styles.ratingBadge}>
-                          <react_native_1.Text style={styles.ratingText}>★ {title.rating}</react_native_1.Text>
-                        </react_native_1.View>
+                      <react_native_1.View style={styles.cardMeta}>
+                        <react_native_1.Text style={styles.cardCategory}>{item.category || item.genres[0]}</react_native_1.Text>
+                        <react_native_1.Text style={styles.cardRating}>★ {item.rating}</react_native_1.Text>
                       </react_native_1.View>
-                      <react_native_1.Text style={styles.cardGenres}>
-                        {title.releaseYear} • {title.contentRating} • {title.genres.join(', ')}
-                      </react_native_1.Text>
-                      <react_native_1.Text style={styles.cardDescription} numberOfLines={2}>
-                        {title.description}
-                      </react_native_1.Text>
                     </react_native_1.View>
+                  </react_native_1.Pressable>
 
-                    {/* Actions */}
-                    <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-                      <react_native_1.View style={styles.cardActions}>
-                        {idx === 0 ? (<react_tv_space_navigation_1.DefaultFocus>
-                            <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigateToPlayer(title)}>
-                              {({ isFocused: btnFocused }) => (<react_native_1.View style={[styles.playBtn, btnFocused && styles.btnFocused]}>
-                                  <react_native_1.Text style={[styles.playBtnText, btnFocused && styles.playBtnTextFocused]}>
-                                    ▶ Play
-                                  </react_native_1.Text>
-                                </react_native_1.View>)}
-                            </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-                          </react_tv_space_navigation_1.DefaultFocus>) : (<react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigateToPlayer(title)}>
-                            {({ isFocused: btnFocused }) => (<react_native_1.View style={[styles.playBtn, btnFocused && styles.btnFocused]}>
-                                <react_native_1.Text style={[styles.playBtnText, btnFocused && styles.playBtnTextFocused]}>
-                                  ▶ Play
-                                </react_native_1.Text>
-                              </react_native_1.View>)}
-                          </react_tv_space_navigation_1.SpatialNavigationFocusableView>)}
+                  {/* Actions Bar */}
+                  <react_native_1.View style={styles.cardActionsRow}>
+                    <react_native_1.Pressable accessibilityRole="button" onPress={() => navigateToPlayer(item)} style={({ hovered }) => [
+                        styles.playActionBtn,
+                        hovered && styles.playActionBtnHovered,
+                    ]}>
+                      <react_native_1.Text style={styles.playActionText}>▶ Play</react_native_1.Text>
+                    </react_native_1.Pressable>
 
-                        <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigateToDetails(title)}>
-                          {({ isFocused: btnFocused }) => (<react_native_1.View style={[styles.infoBtn, btnFocused && styles.btnFocused]}>
-                              <react_native_1.Text style={[styles.infoBtnText, btnFocused && styles.infoBtnTextFocused]}>
-                                ℹ Details
-                              </react_native_1.Text>
-                            </react_native_1.View>)}
-                        </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-
-                        <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => handleRemove(title.id)}>
-                          {({ isFocused: btnFocused }) => (<react_native_1.View style={[styles.removeBtn, btnFocused && styles.btnFocused]}>
-                              <react_native_1.Text style={[styles.removeBtnText, btnFocused && styles.removeBtnTextFocused]}>
-                                ✕ Remove
-                              </react_native_1.Text>
-                            </react_native_1.View>)}
-                        </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-                      </react_native_1.View>
-                    </react_tv_space_navigation_1.SpatialNavigationNode>
-                  </react_native_1.View>))}
-              </react_native_1.View>
-            </react_tv_space_navigation_1.SpatialNavigationNode>
-          </react_native_1.ScrollView>)}
-      </react_native_1.View>
-    </react_tv_space_navigation_1.SpatialNavigationRoot>);
+                    <react_native_1.Pressable accessibilityRole="button" onPress={() => handleRemove(item.id)} style={({ hovered }) => [
+                        styles.removeActionBtn,
+                        hovered && styles.removeActionBtnHovered,
+                    ]}>
+                      <react_native_1.Text style={styles.removeActionText}>✕ Remove</react_native_1.Text>
+                    </react_native_1.Pressable>
+                  </react_native_1.View>
+                </react_native_1.View>);
+            })}
+          </react_native_1.View>)}
+      </react_native_1.ScrollView>
+    </react_native_1.View>);
 }
 const styles = react_native_1.StyleSheet.create({
-    container: {
+    rootScreen: {
         flex: 1,
-        backgroundColor: theme_1.colors.background,
-        paddingHorizontal: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.horizontal),
-        paddingTop: (0, useScale_1.scaledPixels)(theme_1.safeZones.titleSafe.vertical),
-        paddingBottom: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.vertical),
+        backgroundColor: '#0B0D11',
     },
-    header: {
-        marginBottom: (0, useScale_1.scaledPixels)(24),
+    mainScrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 60,
+    },
+    headerSection: {
+        paddingHorizontal: 48,
+        paddingTop: 32,
+        paddingBottom: 24,
     },
     headerTitle: {
+        fontSize: 32,
+        fontWeight: '900',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(38),
-        fontWeight: '800',
         letterSpacing: 0.5,
     },
     headerSubtitle: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(18),
-        marginTop: (0, useScale_1.scaledPixels)(4),
+        fontSize: 14,
+        color: theme_1.colors.textMuted,
+        marginTop: 6,
     },
-    scrollContent: {
-        flex: 1,
-    },
-    cardList: {
-        paddingBottom: (0, useScale_1.scaledPixels)(30),
-    },
-    savedCardRow: {
+    gridContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: theme_1.colors.card,
-        borderRadius: (0, useScale_1.scaledPixels)(12),
-        padding: (0, useScale_1.scaledPixels)(16),
-        marginBottom: (0, useScale_1.scaledPixels)(16),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: theme_1.colors.border,
+        flexWrap: 'wrap',
+        paddingHorizontal: 48,
+        gap: 20,
     },
-    cardThumb: {
-        width: (0, useScale_1.scaledPixels)(220),
-        height: (0, useScale_1.scaledPixels)(124),
-        borderRadius: (0, useScale_1.scaledPixels)(8),
-        backgroundColor: theme_1.colors.cardElevated,
+    cardWrapper: {
+        width: 270,
+        borderRadius: 12,
+        overflow: 'hidden',
+        backgroundColor: '#161B22',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    cardWrapperHovered: {
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        // @ts-ignore
+        boxShadow: '0 0 22px rgba(255, 255, 255, 0.55)',
+        transform: [{ scale: 1.05 }],
+        zIndex: 50,
+    },
+    cardPressable: {
+        width: '100%',
+        height: 154,
+        position: 'relative',
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    cardImage: {
+        width: '100%',
+        height: '100%',
+    },
+    cardGradient: {
+        ...react_native_1.StyleSheet.absoluteFillObject,
+    },
+    cardInfo: {
+        position: 'absolute',
+        bottom: 8,
+        left: 10,
+        right: 10,
+    },
+    cardTitle: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: theme_1.colors.text,
     },
     cardMeta: {
-        flex: 1,
-        marginHorizontal: (0, useScale_1.scaledPixels)(20),
-    },
-    cardMetaHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginTop: 3,
     },
-    cardTitle: {
-        color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(22),
-        fontWeight: '700',
-        marginBottom: (0, useScale_1.scaledPixels)(4),
-    },
-    ratingBadge: {
-        backgroundColor: 'rgba(229, 169, 60, 0.2)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(8),
-        paddingVertical: (0, useScale_1.scaledPixels)(2),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-    },
-    ratingText: {
-        color: theme_1.colors.primaryLight,
-        fontWeight: '700',
-        fontSize: (0, useScale_1.scaledPixels)(13),
-    },
-    cardGenres: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(14),
+    cardCategory: {
+        fontSize: 10,
+        color: theme_1.colors.textMuted,
         fontWeight: '600',
-        marginBottom: (0, useScale_1.scaledPixels)(6),
     },
-    cardDescription: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(15),
-        lineHeight: (0, useScale_1.scaledPixels)(22),
+    cardRating: {
+        fontSize: 10,
+        color: theme_1.colors.primary,
+        fontWeight: '700',
     },
-    cardActions: {
-        flexDirection: 'column',
-        justifyContent: 'center',
-        width: (0, useScale_1.scaledPixels)(130),
+    cardActionsRow: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: '#11141A',
     },
-    playBtn: {
+    playActionBtn: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        backgroundColor: 'rgba(229, 169, 60, 0.15)',
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    playActionBtnHovered: {
         backgroundColor: theme_1.colors.primary,
-        borderRadius: (0, useScale_1.scaledPixels)(6),
-        paddingVertical: (0, useScale_1.scaledPixels)(8),
+    },
+    playActionText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: theme_1.colors.primary,
+    },
+    removeActionBtn: {
+        flex: 1,
+        paddingVertical: 10,
         alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(8),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.primary,
+        borderLeftWidth: 1,
+        borderLeftColor: 'rgba(255, 255, 255, 0.08)',
+        // @ts-ignore
+        cursor: 'pointer',
     },
-    infoBtn: {
-        backgroundColor: theme_1.colors.cardElevated,
-        borderRadius: (0, useScale_1.scaledPixels)(6),
-        paddingVertical: (0, useScale_1.scaledPixels)(8),
-        alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(8),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.border,
+    removeActionBtnHovered: {
+        backgroundColor: 'rgba(231, 76, 60, 0.25)',
     },
-    removeBtn: {
-        backgroundColor: 'transparent',
-        borderRadius: (0, useScale_1.scaledPixels)(6),
-        paddingVertical: (0, useScale_1.scaledPixels)(8),
-        alignItems: 'center',
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.borderLight,
-    },
-    btnFocused: {
-        backgroundColor: theme_1.colors.primaryLight,
-        borderColor: '#FFFFFF',
-        transform: [{ scale: 1.06 }],
-    },
-    playBtnText: {
-        color: theme_1.colors.textOnPrimary,
+    removeActionText: {
+        fontSize: 12,
         fontWeight: '700',
-        fontSize: (0, useScale_1.scaledPixels)(14),
-    },
-    playBtnTextFocused: {
-        color: theme_1.colors.textOnPrimary,
-    },
-    infoBtnText: {
-        color: theme_1.colors.text,
-        fontWeight: '600',
-        fontSize: (0, useScale_1.scaledPixels)(14),
-    },
-    infoBtnTextFocused: {
-        color: theme_1.colors.textOnPrimary,
-    },
-    removeBtnText: {
-        color: theme_1.colors.textTertiary,
-        fontWeight: '600',
-        fontSize: (0, useScale_1.scaledPixels)(13),
-    },
-    removeBtnTextFocused: {
-        color: theme_1.colors.textOnPrimary,
+        color: theme_1.colors.textMuted,
     },
     emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: (0, useScale_1.scaledPixels)(60),
+        paddingVertical: 80,
     },
     emptyIcon: {
-        fontSize: (0, useScale_1.scaledPixels)(64),
-        marginBottom: (0, useScale_1.scaledPixels)(16),
+        fontSize: 54,
+        marginBottom: 16,
     },
     emptyTitle: {
+        fontSize: 22,
+        fontWeight: '800',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(28),
-        fontWeight: '700',
-        marginBottom: (0, useScale_1.scaledPixels)(8),
     },
     emptySubtitle: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(18),
-        marginBottom: (0, useScale_1.scaledPixels)(24),
+        fontSize: 14,
+        color: theme_1.colors.textMuted,
+        marginTop: 8,
+        maxWidth: 450,
+        textAlign: 'center',
     },
-    exploreBtn: {
+    browseBtn: {
+        marginTop: 24,
         backgroundColor: theme_1.colors.primary,
-        paddingHorizontal: (0, useScale_1.scaledPixels)(28),
-        paddingVertical: (0, useScale_1.scaledPixels)(14),
-        borderRadius: (0, useScale_1.scaledPixels)(8),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.primary,
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+        // @ts-ignore
+        cursor: 'pointer',
     },
-    exploreBtnFocused: {
-        backgroundColor: theme_1.colors.primaryLight,
-        borderColor: '#FFFFFF',
-        transform: [{ scale: 1.05 }],
+    browseBtnHovered: {
+        backgroundColor: '#F5BE58',
+        // @ts-ignore
+        boxShadow: '0 0 16px rgba(229, 169, 60, 0.6)',
     },
-    exploreBtnText: {
-        color: theme_1.colors.textOnPrimary,
-        fontWeight: '700',
-        fontSize: (0, useScale_1.scaledPixels)(18),
-    },
-    exploreBtnTextFocused: {
-        color: theme_1.colors.textOnPrimary,
+    browseBtnText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: '#0B0D11',
     },
 });

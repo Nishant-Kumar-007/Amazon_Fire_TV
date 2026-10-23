@@ -21,6 +21,7 @@ exports.colors = {
     text: '#F7F8FA',
     textSecondary: '#C4CAD4',
     textTertiary: '#8A92A3',
+    textMuted: '#8A92A3',
     textOnPrimary: '#0B0D11',
     textAccent: '#F5BE58',
     // Borders & Dividers

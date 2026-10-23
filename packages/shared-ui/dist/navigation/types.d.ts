@@ -18,6 +18,7 @@ export type RootStackParamList = {
         headerImage: string;
         title?: string;
         id?: string;
+        startTime?: number;
     };
     FocusLab: undefined;
 };

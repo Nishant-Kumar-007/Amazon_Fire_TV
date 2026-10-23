@@ -37,7 +37,7 @@ exports.useMenuContext = exports.MenuProvider = void 0;
 const react_1 = __importStar(require("react"));
 const MenuContext = (0, react_1.createContext)(undefined);
 const MenuProvider = ({ children }) => {
-    const [isOpen, setIsOpen] = (0, react_1.useState)(true);
+    const [isOpen, setIsOpen] = (0, react_1.useState)(false);
     const value = (0, react_1.useMemo)(() => ({
         isOpen,
         toggleMenu: setIsOpen,

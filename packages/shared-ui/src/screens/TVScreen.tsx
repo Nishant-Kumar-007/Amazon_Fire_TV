@@ -1,33 +1,24 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Text, Image, ScrollView } from 'react-native';
-import { useNavigation, DrawerActions, useIsFocused } from '@react-navigation/native';
+import { StyleSheet, View, Text, Image, ScrollView, Pressable } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  DefaultFocus,
-  SpatialNavigationFocusableView,
-  SpatialNavigationRoot,
-  SpatialNavigationNode,
-} from 'react-tv-space-navigation';
-import { Direction } from '@bam.tech/lrud';
-import { scaledPixels } from '../hooks/useScale';
-import { useMenuContext } from '../components/MenuContext';
 import { RootStackParamList } from '../navigation/types';
-import { safeZones, colors } from '../theme';
-import { getOpenDrawerDirection } from '../utils/rtl';
+import { colors } from '../theme';
 import { StorageService } from '../services/StorageService';
 import { VIEWEASE_CATALOG, ViewEaseTitle } from '../data/viewEaseCatalog';
+import { TopNavigationBar } from '../components/TopNavigationBar';
+import PlatformLinearGradient from '../components/PlatformLinearGradient';
 
 type TVScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DrawerNavigator'>;
 
 export default function TVScreen() {
   const navigation = useNavigation<TVScreenNavigationProp>();
-  const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
   const isFocused = useIsFocused();
-  const isActive = isFocused && !isMenuOpen;
 
   const [watchlistIds, setWatchlistIds] = useState<string[]>(() =>
     StorageService.getWatchlist(),
   );
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
   useEffect(() => {
     const update = () => setWatchlistIds(StorageService.getWatchlist());
@@ -41,16 +32,6 @@ export default function TVScreen() {
       .map((id) => VIEWEASE_CATALOG.find((t) => t.id === id))
       .filter((t): t is ViewEaseTitle => !!t);
   }, [watchlistIds]);
-
-  const onDirectionHandledWithoutMovement = useCallback(
-    (movement: Direction) => {
-      if (movement === getOpenDrawerDirection()) {
-        navigation.dispatch(DrawerActions.openDrawer());
-        toggleMenu(true);
-      }
-    },
-    [toggleMenu, navigation],
-  );
 
   const navigateToDetails = useCallback(
     (item: ViewEaseTitle) => {
@@ -88,316 +69,283 @@ export default function TVScreen() {
   }, []);
 
   return (
-    <SpatialNavigationRoot
-      isActive={isActive}
-      onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}
-    >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My List & Saved Watchlist</Text>
+    <View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar activeTab="TV" />
+
+      <ScrollView
+        style={styles.mainScrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerSection}>
+          <Text style={styles.headerTitle}>My Saved Watchlist</Text>
           <Text style={styles.headerSubtitle}>
-            Your personalized queue of movies, series, and contextual documentaries ({savedTitles.length} items)
+            Your personalized queue of movies, web series, and anime ({savedTitles.length} saved)
           </Text>
         </View>
 
         {savedTitles.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🎬</Text>
-            <Text style={styles.emptyTitle}>Your Watchlist is Empty</Text>
+            <Text style={styles.emptyIcon}>🔖</Text>
+            <Text style={styles.emptyTitle}>Your watchlist is empty</Text>
             <Text style={styles.emptySubtitle}>
-              Explore our cinematic library and press "Add to My List" on any title.
+              Explore our cinematic catalog and click "+ Add to My List" to build your queue.
             </Text>
-            <SpatialNavigationNode orientation="horizontal">
-              <DefaultFocus>
-                <SpatialNavigationFocusableView
-                  onSelect={() => navigation.navigate('Home' as any)}
-                >
-                  {({ isFocused: btnFocused }) => (
-                    <View style={[styles.exploreBtn, btnFocused && styles.exploreBtnFocused]}>
-                      <Text style={[styles.exploreBtnText, btnFocused && styles.exploreBtnTextFocused]}>
-                        Browse Featured Titles
-                      </Text>
-                    </View>
-                  )}
-                </SpatialNavigationFocusableView>
-              </DefaultFocus>
-            </SpatialNavigationNode>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => (navigation as any).navigate('Home')}
+              style={({ hovered }: any) => [
+                styles.browseBtn,
+                hovered && styles.browseBtnHovered,
+              ]}
+            >
+              <Text style={styles.browseBtnText}>Explore Home Screen</Text>
+            </Pressable>
           </View>
         ) : (
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <SpatialNavigationNode orientation="vertical">
-              <View style={styles.cardList}>
-                {savedTitles.map((title, idx) => (
-                  <View key={title.id} style={styles.savedCardRow}>
+          <View style={styles.gridContainer}>
+            {savedTitles.map((item) => {
+              const isHovered = hoveredCardId === item.id;
+              return (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.cardWrapper,
+                    isHovered && styles.cardWrapperHovered,
+                  ]}
+                  // @ts-ignore
+                  onMouseEnter={() => setHoveredCardId(item.id)}
+                  onMouseLeave={() => setHoveredCardId(null)}
+                >
+                  <Pressable
+                    style={styles.cardPressable}
+                    onPress={() => navigateToDetails(item)}
+                  >
                     <Image
-                      source={{ uri: title.headerImage }}
-                      style={styles.cardThumb}
+                      source={{ uri: item.headerImage || item.posterImage }}
+                      style={styles.cardImage}
                       resizeMode="cover"
                     />
-                    <View style={styles.cardMeta}>
-                      <View style={styles.cardMetaHeader}>
-                        <Text style={styles.cardTitle}>{title.title}</Text>
-                        <View style={styles.ratingBadge}>
-                          <Text style={styles.ratingText}>★ {title.rating}</Text>
-                        </View>
+
+                    <PlatformLinearGradient
+                      colors={['transparent', 'rgba(11, 13, 17, 0.95)']}
+                      start={{ x: 0, y: 0.4 }}
+                      end={{ x: 0, y: 1 }}
+                      style={styles.cardGradient}
+                    />
+
+                    <View style={styles.cardInfo}>
+                      <Text style={styles.cardTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <View style={styles.cardMeta}>
+                        <Text style={styles.cardCategory}>{item.category || item.genres[0]}</Text>
+                        <Text style={styles.cardRating}>★ {item.rating}</Text>
                       </View>
-                      <Text style={styles.cardGenres}>
-                        {title.releaseYear} • {title.contentRating} • {title.genres.join(', ')}
-                      </Text>
-                      <Text style={styles.cardDescription} numberOfLines={2}>
-                        {title.description}
-                      </Text>
                     </View>
+                  </Pressable>
 
-                    {/* Actions */}
-                    <SpatialNavigationNode orientation="horizontal">
-                      <View style={styles.cardActions}>
-                        {idx === 0 ? (
-                          <DefaultFocus>
-                            <SpatialNavigationFocusableView
-                              onSelect={() => navigateToPlayer(title)}
-                            >
-                              {({ isFocused: btnFocused }) => (
-                                <View style={[styles.playBtn, btnFocused && styles.btnFocused]}>
-                                  <Text style={[styles.playBtnText, btnFocused && styles.playBtnTextFocused]}>
-                                    ▶ Play
-                                  </Text>
-                                </View>
-                              )}
-                            </SpatialNavigationFocusableView>
-                          </DefaultFocus>
-                        ) : (
-                          <SpatialNavigationFocusableView
-                            onSelect={() => navigateToPlayer(title)}
-                          >
-                            {({ isFocused: btnFocused }) => (
-                              <View style={[styles.playBtn, btnFocused && styles.btnFocused]}>
-                                <Text style={[styles.playBtnText, btnFocused && styles.playBtnTextFocused]}>
-                                  ▶ Play
-                                </Text>
-                              </View>
-                            )}
-                          </SpatialNavigationFocusableView>
-                        )}
+                  {/* Actions Bar */}
+                  <View style={styles.cardActionsRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => navigateToPlayer(item)}
+                      style={({ hovered }: any) => [
+                        styles.playActionBtn,
+                        hovered && styles.playActionBtnHovered,
+                      ]}
+                    >
+                      <Text style={styles.playActionText}>▶ Play</Text>
+                    </Pressable>
 
-                        <SpatialNavigationFocusableView
-                          onSelect={() => navigateToDetails(title)}
-                        >
-                          {({ isFocused: btnFocused }) => (
-                            <View style={[styles.infoBtn, btnFocused && styles.btnFocused]}>
-                              <Text style={[styles.infoBtnText, btnFocused && styles.infoBtnTextFocused]}>
-                                ℹ Details
-                              </Text>
-                            </View>
-                          )}
-                        </SpatialNavigationFocusableView>
-
-                        <SpatialNavigationFocusableView
-                          onSelect={() => handleRemove(title.id)}
-                        >
-                          {({ isFocused: btnFocused }) => (
-                            <View style={[styles.removeBtn, btnFocused && styles.btnFocused]}>
-                              <Text style={[styles.removeBtnText, btnFocused && styles.removeBtnTextFocused]}>
-                                ✕ Remove
-                              </Text>
-                            </View>
-                          )}
-                        </SpatialNavigationFocusableView>
-                      </View>
-                    </SpatialNavigationNode>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => handleRemove(item.id)}
+                      style={({ hovered }: any) => [
+                        styles.removeActionBtn,
+                        hovered && styles.removeActionBtnHovered,
+                      ]}
+                    >
+                      <Text style={styles.removeActionText}>✕ Remove</Text>
+                    </Pressable>
                   </View>
-                ))}
-              </View>
-            </SpatialNavigationNode>
-          </ScrollView>
+                </View>
+              );
+            })}
+          </View>
         )}
-      </View>
-    </SpatialNavigationRoot>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootScreen: {
     flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingTop: scaledPixels(safeZones.titleSafe.vertical),
-    paddingBottom: scaledPixels(safeZones.actionSafe.vertical),
+    backgroundColor: '#0B0D11',
   },
-  header: {
-    marginBottom: scaledPixels(24),
+  mainScrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 60,
+  },
+  headerSection: {
+    paddingHorizontal: 48,
+    paddingTop: 32,
+    paddingBottom: 24,
   },
   headerTitle: {
+    fontSize: 32,
+    fontWeight: '900',
     color: colors.text,
-    fontSize: scaledPixels(38),
-    fontWeight: '800',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(18),
-    marginTop: scaledPixels(4),
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 6,
   },
-  scrollContent: {
-    flex: 1,
-  },
-  cardList: {
-    paddingBottom: scaledPixels(30),
-  },
-  savedCardRow: {
+  gridContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: scaledPixels(12),
-    padding: scaledPixels(16),
-    marginBottom: scaledPixels(16),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.border,
+    flexWrap: 'wrap',
+    paddingHorizontal: 48,
+    gap: 20,
   },
-  cardThumb: {
-    width: scaledPixels(220),
-    height: scaledPixels(124),
-    borderRadius: scaledPixels(8),
-    backgroundColor: colors.cardElevated,
+  cardWrapper: {
+    width: 270,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#161B22',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  cardWrapperHovered: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 22px rgba(255, 255, 255, 0.55)',
+    transform: [{ scale: 1.05 }],
+    zIndex: 50,
+  },
+  cardPressable: {
+    width: '100%',
+    height: 154,
+    position: 'relative',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardInfo: {
+    position: 'absolute',
+    bottom: 8,
+    left: 10,
+    right: 10,
+  },
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.text,
   },
   cardMeta: {
-    flex: 1,
-    marginHorizontal: scaledPixels(20),
-  },
-  cardMetaHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 3,
   },
-  cardTitle: {
-    color: colors.text,
-    fontSize: scaledPixels(22),
-    fontWeight: '700',
-    marginBottom: scaledPixels(4),
-  },
-  ratingBadge: {
-    backgroundColor: 'rgba(229, 169, 60, 0.2)',
-    paddingHorizontal: scaledPixels(8),
-    paddingVertical: scaledPixels(2),
-    borderRadius: scaledPixels(4),
-  },
-  ratingText: {
-    color: colors.primaryLight,
-    fontWeight: '700',
-    fontSize: scaledPixels(13),
-  },
-  cardGenres: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(14),
+  cardCategory: {
+    fontSize: 10,
+    color: colors.textMuted,
     fontWeight: '600',
-    marginBottom: scaledPixels(6),
   },
-  cardDescription: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(15),
-    lineHeight: scaledPixels(22),
+  cardRating: {
+    fontSize: 10,
+    color: colors.primary,
+    fontWeight: '700',
   },
-  cardActions: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    width: scaledPixels(130),
+  cardActionsRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#11141A',
   },
-  playBtn: {
+  playActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: 'rgba(229, 169, 60, 0.15)',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  playActionBtnHovered: {
     backgroundColor: colors.primary,
-    borderRadius: scaledPixels(6),
-    paddingVertical: scaledPixels(8),
+  },
+  playActionText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+  removeActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
     alignItems: 'center',
-    marginBottom: scaledPixels(8),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.primary,
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255, 255, 255, 0.08)',
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  infoBtn: {
-    backgroundColor: colors.cardElevated,
-    borderRadius: scaledPixels(6),
-    paddingVertical: scaledPixels(8),
-    alignItems: 'center',
-    marginBottom: scaledPixels(8),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.border,
+  removeActionBtnHovered: {
+    backgroundColor: 'rgba(231, 76, 60, 0.25)',
   },
-  removeBtn: {
-    backgroundColor: 'transparent',
-    borderRadius: scaledPixels(6),
-    paddingVertical: scaledPixels(8),
-    alignItems: 'center',
-    borderWidth: scaledPixels(2),
-    borderColor: colors.borderLight,
-  },
-  btnFocused: {
-    backgroundColor: colors.primaryLight,
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.06 }],
-  },
-  playBtnText: {
-    color: colors.textOnPrimary,
+  removeActionText: {
+    fontSize: 12,
     fontWeight: '700',
-    fontSize: scaledPixels(14),
-  },
-  playBtnTextFocused: {
-    color: colors.textOnPrimary,
-  },
-  infoBtnText: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: scaledPixels(14),
-  },
-  infoBtnTextFocused: {
-    color: colors.textOnPrimary,
-  },
-  removeBtnText: {
-    color: colors.textTertiary,
-    fontWeight: '600',
-    fontSize: scaledPixels(13),
-  },
-  removeBtnTextFocused: {
-    color: colors.textOnPrimary,
+    color: colors.textMuted,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: scaledPixels(60),
+    paddingVertical: 80,
   },
   emptyIcon: {
-    fontSize: scaledPixels(64),
-    marginBottom: scaledPixels(16),
+    fontSize: 54,
+    marginBottom: 16,
   },
   emptyTitle: {
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(28),
-    fontWeight: '700',
-    marginBottom: scaledPixels(8),
   },
   emptySubtitle: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(18),
-    marginBottom: scaledPixels(24),
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 8,
+    maxWidth: 450,
+    textAlign: 'center',
   },
-  exploreBtn: {
+  browseBtn: {
+    marginTop: 24,
     backgroundColor: colors.primary,
-    paddingHorizontal: scaledPixels(28),
-    paddingVertical: scaledPixels(14),
-    borderRadius: scaledPixels(8),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  exploreBtnFocused: {
-    backgroundColor: colors.primaryLight,
-    borderColor: '#FFFFFF',
-    transform: [{ scale: 1.05 }],
+  browseBtnHovered: {
+    backgroundColor: '#F5BE58',
+    // @ts-ignore
+    boxShadow: '0 0 16px rgba(229, 169, 60, 0.6)',
   },
-  exploreBtnText: {
-    color: colors.textOnPrimary,
-    fontWeight: '700',
-    fontSize: scaledPixels(18),
-  },
-  exploreBtnTextFocused: {
-    color: colors.textOnPrimary,
+  browseBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0B0D11',
   },
 });

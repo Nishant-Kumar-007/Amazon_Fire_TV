@@ -40,12 +40,11 @@ exports.default = DetailsScreen;
 const react_1 = __importStar(require("react"));
 const react_native_1 = require("react-native");
 const native_1 = require("@react-navigation/native");
-const react_tv_space_navigation_1 = require("react-tv-space-navigation");
-const useScale_1 = require("../hooks/useScale");
 const theme_1 = require("../theme");
 const PlatformLinearGradient_1 = __importDefault(require("../components/PlatformLinearGradient"));
 const viewEaseCatalog_1 = require("../data/viewEaseCatalog");
 const StorageService_1 = require("../services/StorageService");
+const TopNavigationBar_1 = require("../components/TopNavigationBar");
 function DetailsScreen() {
     const route = (0, native_1.useRoute)();
     const navigation = (0, native_1.useNavigation)();
@@ -57,6 +56,7 @@ function DetailsScreen() {
         return found || (0, viewEaseCatalog_1.getTitleById)('quantum-horizon');
     }, [title, movie]);
     const [inWatchlist, setInWatchlist] = (0, react_1.useState)(() => StorageService_1.StorageService.isInWatchlist(catalogEntry.id));
+    const [hoveredRelatedId, setHoveredRelatedId] = (0, react_1.useState)(null);
     (0, react_1.useEffect)(() => {
         setInWatchlist(StorageService_1.StorageService.isInWatchlist(catalogEntry.id));
         const unsubscribe = StorageService_1.StorageService.subscribe(() => {
@@ -85,20 +85,22 @@ function DetailsScreen() {
         return `${mins}m ${secs}s`;
     }, [duration, catalogEntry.duration]);
     const relatedTitles = (0, react_1.useMemo)(() => {
-        return viewEaseCatalog_1.VIEWEASE_CATALOG.filter((t) => t.id !== catalogEntry.id).slice(0, 4);
+        return viewEaseCatalog_1.VIEWEASE_CATALOG.filter((t) => t.id !== catalogEntry.id).slice(0, 5);
     }, [catalogEntry.id]);
-    return (<react_tv_space_navigation_1.SpatialNavigationRoot isActive={isFocused}>
-      <react_native_1.View style={styles.container}>
-        {/* Background Backdrop Artwork */}
-        <react_native_1.Image source={{ uri: catalogEntry.headerImage || headerImage }} style={styles.backgroundImage} resizeMode="cover"/>
+    return (<react_native_1.View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar_1.TopNavigationBar />
 
-        {/* Dual Gradients for Cinematic Readability */}
-        <PlatformLinearGradient_1.default colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.85)', 'rgba(11,13,17,0.3)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientLeft}/>
-        <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11,13,17,0.8)', theme_1.colors.background]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.gradientBottom}/>
+      <react_native_1.ScrollView style={styles.mainScrollView} showsVerticalScrollIndicator={false}>
+        {/* Backdrop Banner */}
+        <react_native_1.View style={styles.backdropContainer}>
+          <react_native_1.Image source={{ uri: catalogEntry.headerImage || headerImage }} style={styles.backgroundImage} resizeMode="cover"/>
 
-        {/* Details Content Container */}
-        <react_native_1.ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <react_native_1.View style={styles.contentWrapper}>
+          <PlatformLinearGradient_1.default colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.85)', 'rgba(11,13,17,0.3)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientLeft}/>
+          <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11,13,17,0.8)', '#0B0D11']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.gradientBottom}/>
+
+          {/* Details Content Overlay */}
+          <react_native_1.View style={styles.detailsContentWrapper}>
             {/* Badges Bar */}
             <react_native_1.View style={styles.badgeRow}>
               <react_native_1.View style={styles.originalBadge}>
@@ -126,7 +128,7 @@ function DetailsScreen() {
 
             {/* Title & Tagline */}
             <react_native_1.Text style={styles.title}>{title || catalogEntry.title}</react_native_1.Text>
-            {catalogEntry.tagline ? (<react_native_1.Text style={styles.tagline}>{catalogEntry.tagline}</react_native_1.Text>) : null}
+            {catalogEntry.tagline ? (<react_native_1.Text style={styles.tagline}>"{catalogEntry.tagline}"</react_native_1.Text>) : null}
 
             {/* Genres */}
             <react_native_1.View style={styles.genresRow}>
@@ -141,59 +143,37 @@ function DetailsScreen() {
             </react_native_1.Text>
 
             {/* Interactive Action Controls */}
-            <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-              <react_native_1.View style={styles.actionsRow}>
-                <react_tv_space_navigation_1.DefaultFocus>
-                  <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigateToPlayer(0)}>
-                    {({ isFocused: btnFocused }) => (<react_native_1.View style={[
-                styles.actionBtn,
-                styles.playBtn,
-                btnFocused && styles.actionBtnFocused,
-            ]}>
-                        <react_native_1.Text style={[
-                styles.actionBtnText,
-                styles.playBtnText,
-                btnFocused && styles.actionBtnTextFocused,
-            ]}>
-                          ▶ Play Movie
-                        </react_native_1.Text>
-                      </react_native_1.View>)}
-                  </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-                </react_tv_space_navigation_1.DefaultFocus>
+            <react_native_1.View style={styles.actionsRow}>
+              <react_native_1.Pressable accessibilityRole="button" onPress={() => navigateToPlayer(0)} style={({ hovered }) => [
+            styles.actionBtn,
+            styles.playBtn,
+            hovered && styles.playBtnHovered,
+        ]}>
+                <react_native_1.Text style={styles.playBtnText}>▶ Play Movie</react_native_1.Text>
+              </react_native_1.Pressable>
 
-                <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={toggleWatchlist}>
-                  {({ isFocused: btnFocused }) => (<react_native_1.View style={[
-                styles.actionBtn,
-                styles.watchlistBtn,
-                inWatchlist && styles.inWatchlistBtn,
-                btnFocused && styles.actionBtnFocused,
-            ]}>
-                      <react_native_1.Text style={[
-                styles.actionBtnText,
-                inWatchlist && styles.inWatchlistText,
-                btnFocused && styles.actionBtnTextFocused,
-            ]}>
-                        {inWatchlist ? '✓ In My List' : '➕ Add to My List'}
-                      </react_native_1.Text>
-                    </react_native_1.View>)}
-                </react_tv_space_navigation_1.SpatialNavigationFocusableView>
+              <react_native_1.Pressable accessibilityRole="button" onPress={toggleWatchlist} style={({ hovered }) => [
+            styles.actionBtn,
+            styles.watchlistBtn,
+            inWatchlist && styles.inWatchlistBtn,
+            hovered && styles.secondaryBtnHovered,
+        ]}>
+                <react_native_1.Text style={[
+            styles.secondaryBtnText,
+            inWatchlist && styles.inWatchlistText,
+        ]}>
+                  {inWatchlist ? '✓ In My List' : '➕ Add to My List'}
+                </react_native_1.Text>
+              </react_native_1.Pressable>
 
-                <react_tv_space_navigation_1.SpatialNavigationFocusableView onSelect={() => navigation.goBack()}>
-                  {({ isFocused: btnFocused }) => (<react_native_1.View style={[
-                styles.actionBtn,
-                styles.backBtn,
-                btnFocused && styles.actionBtnFocused,
-            ]}>
-                      <react_native_1.Text style={[
-                styles.actionBtnText,
-                btnFocused && styles.actionBtnTextFocused,
-            ]}>
-                        ← Back
-                      </react_native_1.Text>
-                    </react_native_1.View>)}
-                </react_tv_space_navigation_1.SpatialNavigationFocusableView>
-              </react_native_1.View>
-            </react_tv_space_navigation_1.SpatialNavigationNode>
+              <react_native_1.Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={({ hovered }) => [
+            styles.actionBtn,
+            styles.backBtn,
+            hovered && styles.secondaryBtnHovered,
+        ]}>
+                <react_native_1.Text style={styles.secondaryBtnText}>← Back</react_native_1.Text>
+              </react_native_1.Pressable>
+            </react_native_1.View>
 
             {/* Production & Cast Metadata Panel */}
             <react_native_1.View style={styles.crewCard}>
@@ -214,64 +194,73 @@ function DetailsScreen() {
                 <react_native_1.Text style={styles.crewValue}>English (Dolby 5.1), Hindi • English [CC], Hindi</react_native_1.Text>
               </react_native_1.View>
             </react_native_1.View>
-
-            {/* Related Titles Section */}
-            <react_native_1.View style={styles.relatedSection}>
-              <react_native_1.Text style={styles.relatedHeading}>MORE LIKE THIS</react_native_1.Text>
-              <react_tv_space_navigation_1.SpatialNavigationNode orientation="horizontal">
-                <react_native_1.View style={styles.relatedGrid}>
-                  {relatedTitles.map((item) => (<react_tv_space_navigation_1.SpatialNavigationFocusableView key={item.id} onSelect={() => {
-                navigation.navigate('Details', {
-                    title: item.title,
-                    description: item.description,
-                    headerImage: item.headerImage,
-                    movie: item.movie,
-                    category: item.category,
-                    genres: item.genres,
-                    releaseYear: item.releaseYear,
-                    rating: item.rating,
-                    ratingCount: item.ratingCount,
-                    contentRating: item.contentRating,
-                    duration: item.duration,
-                });
-            }}>
-                      {({ isFocused: cardFocused }) => (<react_native_1.View style={[
-                    styles.relatedCard,
-                    cardFocused && styles.relatedCardFocused,
-                ]}>
-                          <react_native_1.Image source={{ uri: item.headerImage }} style={styles.relatedImage} resizeMode="cover"/>
-                          <react_native_1.View style={styles.relatedOverlay}>
-                            <react_native_1.Text style={styles.relatedTitle} numberOfLines={1}>
-                              {item.title}
-                            </react_native_1.Text>
-                            <react_native_1.Text style={styles.relatedRating}>★ {item.rating}</react_native_1.Text>
-                          </react_native_1.View>
-                        </react_native_1.View>)}
-                    </react_tv_space_navigation_1.SpatialNavigationFocusableView>))}
-                </react_native_1.View>
-              </react_tv_space_navigation_1.SpatialNavigationNode>
-            </react_native_1.View>
           </react_native_1.View>
-        </react_native_1.ScrollView>
-      </react_native_1.View>
-    </react_tv_space_navigation_1.SpatialNavigationRoot>);
+        </react_native_1.View>
+
+        {/* Related Titles Carousel */}
+        <react_native_1.View style={styles.relatedSection}>
+          <react_native_1.Text style={styles.relatedHeading}>More Like This</react_native_1.Text>
+          <react_native_1.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRow}>
+            {relatedTitles.map((item) => {
+            const isHovered = hoveredRelatedId === item.id;
+            return (<react_native_1.Pressable key={item.id} accessibilityRole="button" onPress={() => {
+                    navigation.navigate('Details', {
+                        title: item.title,
+                        description: item.description,
+                        headerImage: item.headerImage,
+                        movie: item.movie,
+                        category: item.category,
+                        genres: item.genres,
+                        releaseYear: item.releaseYear,
+                        rating: item.rating,
+                        ratingCount: item.ratingCount,
+                        contentRating: item.contentRating,
+                        duration: item.duration,
+                    });
+                }} 
+            // @ts-ignore
+            onMouseEnter={() => setHoveredRelatedId(item.id)} onMouseLeave={() => setHoveredRelatedId(null)} style={({ pressed }) => [
+                    styles.relatedCard,
+                    isHovered && styles.relatedCardHovered,
+                    pressed && styles.relatedCardPressed,
+                ]}>
+                  <react_native_1.Image source={{ uri: item.headerImage || item.posterImage }} style={styles.relatedImage} resizeMode="cover"/>
+                  <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11, 13, 17, 0.95)']} start={{ x: 0, y: 0.4 }} end={{ x: 0, y: 1 }} style={styles.cardGradient}/>
+                  <react_native_1.View style={styles.relatedInfo}>
+                    <react_native_1.Text style={styles.relatedTitle} numberOfLines={1}>{item.title}</react_native_1.Text>
+                    <react_native_1.Text style={styles.relatedMeta}>{item.category} • ★ {item.rating}</react_native_1.Text>
+                  </react_native_1.View>
+                </react_native_1.Pressable>);
+        })}
+          </react_native_1.ScrollView>
+        </react_native_1.View>
+      </react_native_1.ScrollView>
+    </react_native_1.View>);
 }
 const styles = react_native_1.StyleSheet.create({
-    container: {
+    rootScreen: {
         flex: 1,
-        backgroundColor: theme_1.colors.background,
+        backgroundColor: '#0B0D11',
+    },
+    mainScrollView: {
+        flex: 1,
+    },
+    backdropContainer: {
+        width: '100%',
+        minHeight: 560,
+        position: 'relative',
+        backgroundColor: '#0D0F14',
     },
     backgroundImage: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '65%',
+        ...react_native_1.StyleSheet.absoluteFillObject,
+        width: '100%',
+        height: '100%',
+        opacity: 0.5,
     },
     gradientLeft: {
         position: 'absolute',
-        top: 0,
         left: 0,
+        top: 0,
         bottom: 0,
         width: '75%',
     },
@@ -280,254 +269,251 @@ const styles = react_native_1.StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        height: (0, useScale_1.scaledPixels)(160),
+        height: 140,
     },
-    scrollContent: {
-        flex: 1,
-    },
-    contentWrapper: {
-        paddingHorizontal: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.horizontal),
-        paddingTop: (0, useScale_1.scaledPixels)(theme_1.safeZones.titleSafe.vertical),
-        paddingBottom: (0, useScale_1.scaledPixels)(theme_1.safeZones.actionSafe.vertical + 40),
-        maxWidth: '65%',
+    detailsContentWrapper: {
+        paddingHorizontal: 48,
+        paddingTop: 36,
+        paddingBottom: 24,
+        maxWidth: 820,
+        zIndex: 10,
     },
     badgeRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(14),
         flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 14,
     },
     originalBadge: {
-        backgroundColor: theme_1.colors.primary,
-        paddingHorizontal: (0, useScale_1.scaledPixels)(10),
-        paddingVertical: (0, useScale_1.scaledPixels)(4),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-        marginEnd: (0, useScale_1.scaledPixels)(10),
+        backgroundColor: 'rgba(229, 169, 60, 0.25)',
+        borderWidth: 1,
+        borderColor: theme_1.colors.primary,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     originalBadgeText: {
-        color: theme_1.colors.textOnPrimary,
+        fontSize: 11,
         fontWeight: '800',
-        fontSize: (0, useScale_1.scaledPixels)(12),
+        color: theme_1.colors.primary,
         letterSpacing: 1,
     },
     metaBadge: {
-        backgroundColor: theme_1.colors.cardElevated,
-        paddingHorizontal: (0, useScale_1.scaledPixels)(10),
-        paddingVertical: (0, useScale_1.scaledPixels)(4),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-        marginEnd: (0, useScale_1.scaledPixels)(10),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: theme_1.colors.border,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     metaBadgeText: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(13),
+        fontSize: 11,
+        color: theme_1.colors.textMuted,
         fontWeight: '600',
     },
     ratingBadge: {
-        backgroundColor: 'rgba(229, 169, 60, 0.2)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(10),
-        paddingVertical: (0, useScale_1.scaledPixels)(4),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-        marginEnd: (0, useScale_1.scaledPixels)(10),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: theme_1.colors.badgeBorder,
+        backgroundColor: 'rgba(229, 169, 60, 0.15)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     ratingText: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(13),
+        fontSize: 11,
+        color: theme_1.colors.primary,
         fontWeight: '700',
     },
     assistPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(52, 199, 89, 0.15)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(10),
-        paddingVertical: (0, useScale_1.scaledPixels)(4),
-        borderRadius: (0, useScale_1.scaledPixels)(4),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: 'rgba(52, 199, 89, 0.4)',
+        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+        borderWidth: 1,
+        borderColor: 'rgba(52, 152, 219, 0.6)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
     assistPillIcon: {
-        fontSize: (0, useScale_1.scaledPixels)(12),
-        marginEnd: (0, useScale_1.scaledPixels)(4),
+        fontSize: 10,
+        color: '#3498db',
+        marginRight: 4,
     },
     assistPillText: {
-        color: theme_1.colors.success,
-        fontSize: (0, useScale_1.scaledPixels)(12),
+        fontSize: 10,
         fontWeight: '800',
+        color: '#3498db',
+        letterSpacing: 0.5,
     },
     title: {
+        fontSize: 42,
+        fontWeight: '900',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(52),
-        fontWeight: '800',
+        lineHeight: 50,
         letterSpacing: 0.5,
-        marginBottom: (0, useScale_1.scaledPixels)(8),
+        marginBottom: 6,
     },
     tagline: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(20),
-        fontWeight: '500',
+        fontSize: 15,
         fontStyle: 'italic',
-        marginBottom: (0, useScale_1.scaledPixels)(16),
+        color: theme_1.colors.primary,
+        marginBottom: 14,
     },
     genresRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(18),
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 16,
     },
     genrePill: {
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(12),
-        paddingVertical: (0, useScale_1.scaledPixels)(4),
-        borderRadius: (0, useScale_1.scaledPixels)(6),
-        marginEnd: (0, useScale_1.scaledPixels)(8),
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 14,
     },
     genrePillText: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(13),
-        fontWeight: '600',
+        fontSize: 11,
+        color: theme_1.colors.textMuted,
     },
     synopsis: {
-        color: theme_1.colors.textSecondary,
-        fontSize: (0, useScale_1.scaledPixels)(19),
-        lineHeight: (0, useScale_1.scaledPixels)(28),
-        marginBottom: (0, useScale_1.scaledPixels)(26),
+        fontSize: 15,
+        lineHeight: 24,
+        color: 'rgba(240, 243, 248, 0.9)',
+        marginBottom: 24,
     },
     actionsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: (0, useScale_1.scaledPixels)(32),
+        flexWrap: 'wrap',
+        gap: 12,
+        marginBottom: 28,
     },
     actionBtn: {
-        paddingVertical: (0, useScale_1.scaledPixels)(14),
-        paddingHorizontal: (0, useScale_1.scaledPixels)(24),
-        borderRadius: (0, useScale_1.scaledPixels)(8),
-        marginEnd: (0, useScale_1.scaledPixels)(14),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
-        borderColor: theme_1.colors.border,
-        alignItems: 'center',
-        justifyContent: 'center',
+        paddingHorizontal: 22,
+        paddingVertical: 12,
+        borderRadius: 8,
+        // @ts-ignore
+        cursor: 'pointer',
     },
     playBtn: {
         backgroundColor: theme_1.colors.primary,
-        borderColor: theme_1.colors.primary,
     },
-    watchlistBtn: {
-        backgroundColor: theme_1.colors.cardElevated,
-    },
-    inWatchlistBtn: {
-        borderColor: theme_1.colors.primaryLight,
-        backgroundColor: 'rgba(229, 169, 60, 0.15)',
-    },
-    backBtn: {
-        backgroundColor: 'transparent',
-        borderColor: theme_1.colors.borderLight,
-    },
-    actionBtnFocused: {
-        backgroundColor: theme_1.colors.primaryLight,
-        borderColor: '#FFFFFF',
-        transform: [{ scale: 1.06 }],
-        shadowColor: theme_1.colors.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.7,
-        shadowRadius: (0, useScale_1.scaledPixels)(12),
-        elevation: 8,
-    },
-    actionBtnText: {
-        color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(17),
-        fontWeight: '700',
+    playBtnHovered: {
+        backgroundColor: '#F5BE58',
+        // @ts-ignore
+        boxShadow: '0 0 20px rgba(229, 169, 60, 0.7)',
+        transform: [{ scale: 1.04 }],
     },
     playBtnText: {
-        color: theme_1.colors.textOnPrimary,
+        fontSize: 15,
+        fontWeight: '800',
+        color: '#0B0D11',
+    },
+    watchlistBtn: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    inWatchlistBtn: {
+        backgroundColor: 'rgba(229, 169, 60, 0.2)',
+        borderColor: theme_1.colors.primary,
+    },
+    backBtn: {
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+    },
+    secondaryBtnHovered: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: '#FFFFFF',
+        transform: [{ scale: 1.04 }],
+    },
+    secondaryBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: theme_1.colors.text,
     },
     inWatchlistText: {
-        color: theme_1.colors.primaryLight,
-    },
-    actionBtnTextFocused: {
-        color: theme_1.colors.textOnPrimary,
+        color: theme_1.colors.primary,
     },
     crewCard: {
-        backgroundColor: theme_1.colors.card,
-        borderRadius: (0, useScale_1.scaledPixels)(12),
-        padding: (0, useScale_1.scaledPixels)(18),
-        borderWidth: (0, useScale_1.scaledPixels)(1),
-        borderColor: theme_1.colors.border,
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: (0, useScale_1.scaledPixels)(32),
+        backgroundColor: '#161B22',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 12,
+        padding: 16,
+        gap: 20,
     },
     crewColumn: {
         flex: 1,
-        marginEnd: (0, useScale_1.scaledPixels)(16),
     },
     crewLabel: {
-        color: theme_1.colors.textTertiary,
-        fontSize: (0, useScale_1.scaledPixels)(12),
-        fontWeight: '700',
-        letterSpacing: 1.1,
-        marginBottom: (0, useScale_1.scaledPixels)(6),
+        fontSize: 10,
+        fontWeight: '800',
+        color: theme_1.colors.textMuted,
+        letterSpacing: 1,
+        marginBottom: 4,
     },
     crewValue: {
+        fontSize: 12,
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(15),
-        lineHeight: (0, useScale_1.scaledPixels)(22),
-        fontWeight: '500',
+        lineHeight: 18,
     },
     relatedSection: {
-        marginTop: (0, useScale_1.scaledPixels)(10),
+        paddingHorizontal: 48,
+        paddingTop: 10,
+        paddingBottom: 40,
     },
     relatedHeading: {
+        fontSize: 22,
+        fontWeight: '800',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(20),
-        fontWeight: '700',
-        letterSpacing: 0.5,
-        marginBottom: (0, useScale_1.scaledPixels)(14),
+        marginBottom: 16,
     },
-    relatedGrid: {
-        flexDirection: 'row',
+    relatedRow: {
+        gap: 16,
     },
     relatedCard: {
-        width: (0, useScale_1.scaledPixels)(240),
-        height: (0, useScale_1.scaledPixels)(135),
-        borderRadius: (0, useScale_1.scaledPixels)(8),
+        width: 250,
+        height: 144,
+        borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: theme_1.colors.card,
-        marginEnd: (0, useScale_1.scaledPixels)(16),
-        borderWidth: (0, useScale_1.scaledPixels)(2),
+        position: 'relative',
+        backgroundColor: '#161B22',
+        borderWidth: 2,
         borderColor: 'transparent',
+        // @ts-ignore
+        cursor: 'pointer',
     },
-    relatedCardFocused: {
-        borderColor: theme_1.colors.primary,
+    relatedCardHovered: {
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        // @ts-ignore
+        boxShadow: '0 0 20px rgba(255, 255, 255, 0.55)',
         transform: [{ scale: 1.06 }],
+    },
+    relatedCardPressed: {
+        transform: [{ scale: 1.02 }],
     },
     relatedImage: {
         width: '100%',
         height: '100%',
     },
-    relatedOverlay: {
+    cardGradient: {
+        ...react_native_1.StyleSheet.absoluteFillObject,
+    },
+    relatedInfo: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(11, 13, 17, 0.9)',
-        paddingHorizontal: (0, useScale_1.scaledPixels)(10),
-        paddingVertical: (0, useScale_1.scaledPixels)(6),
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        bottom: 8,
+        left: 10,
+        right: 10,
     },
     relatedTitle: {
+        fontSize: 13,
+        fontWeight: '800',
         color: theme_1.colors.text,
-        fontSize: (0, useScale_1.scaledPixels)(13),
-        fontWeight: '600',
-        flex: 1,
     },
-    relatedRating: {
-        color: theme_1.colors.primaryLight,
-        fontSize: (0, useScale_1.scaledPixels)(12),
-        fontWeight: '700',
-        marginStart: (0, useScale_1.scaledPixels)(6),
+    relatedMeta: {
+        fontSize: 10,
+        color: theme_1.colors.textMuted,
+        marginTop: 2,
     },
 });

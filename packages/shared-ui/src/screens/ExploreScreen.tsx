@@ -5,71 +5,56 @@ import {
   Text,
   Image,
   ScrollView,
+  Pressable,
+  TextInput,
   Platform,
 } from 'react-native';
-import { useNavigation, DrawerActions, useIsFocused } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  SpatialNavigationFocusableView,
-  SpatialNavigationRoot,
-  SpatialNavigationNode,
-  DefaultFocus,
-} from 'react-tv-space-navigation';
-import { Direction } from '@bam.tech/lrud';
-import { scaledPixels } from '../hooks/useScale';
 import { RootStackParamList } from '../navigation/types';
 import { VIEWEASE_CATALOG, ViewEaseTitle } from '../data/viewEaseCatalog';
-import { colors, safeZones } from '../theme';
-import { getOpenDrawerDirection } from '../utils/rtl';
-import { useMenuContext } from '../components/MenuContext';
+import { colors } from '../theme';
+import { TopNavigationBar } from '../components/TopNavigationBar';
+import PlatformLinearGradient from '../components/PlatformLinearGradient';
 
 type ExploreNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DrawerNavigator'>;
 
 const GENRES = [
   'All',
+  'Web Series',
+  'Movies',
+  'Cartoons & Animation',
   'Sci-Fi',
   'Mystery',
-  'Thriller',
   'Documentary',
-  'ViewEase Originals',
 ];
 
-const SEARCH_PRESETS = ['All Titles', 'Quantum', 'Kyoto', 'Aurora', 'Botanist', 'Code'];
+const SEARCH_PRESETS = ['All Titles', 'Quantum', 'Kyoto', 'Aetheria', 'RoboBunny', 'Paradox', 'Genesis'];
 
 export default function ExploreScreen() {
   const navigation = useNavigation<ExploreNavigationProp>();
-  const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
-  const isFocused = useIsFocused();
-  const isActive = isFocused && !isMenuOpen;
-
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
-  const [activeSearchPreset, setActiveSearchPreset] = useState<string>('All Titles');
-
-  const onDirectionHandledWithoutMovement = useCallback(
-    (movement: Direction) => {
-      if (movement === getOpenDrawerDirection()) {
-        navigation.dispatch(DrawerActions.openDrawer());
-        toggleMenu(true);
-      }
-    },
-    [toggleMenu, navigation],
-  );
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
   const filteredTitles = useMemo(() => {
     return VIEWEASE_CATALOG.filter((item) => {
       const matchesGenre =
         selectedGenre === 'All' ||
-        item.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase()) ||
-        item.category.toLowerCase() === selectedGenre.toLowerCase();
+        item.category === selectedGenre ||
+        item.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase());
 
+      const q = searchQuery.trim().toLowerCase();
       const matchesSearch =
-        activeSearchPreset === 'All Titles' ||
-        item.title.toLowerCase().includes(activeSearchPreset.toLowerCase()) ||
-        item.description.toLowerCase().includes(activeSearchPreset.toLowerCase());
+        !q ||
+        item.title.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q) ||
+        item.genres.some((g) => g.toLowerCase().includes(q)) ||
+        (item.cast && item.cast.some((c) => c.toLowerCase().includes(q)));
 
       return matchesGenre && matchesSearch;
     });
-  }, [selectedGenre, activeSearchPreset]);
+  }, [selectedGenre, searchQuery]);
 
   const handleSelectTitle = useCallback(
     (item: ViewEaseTitle) => {
@@ -91,319 +76,426 @@ export default function ExploreScreen() {
   );
 
   return (
-    <SpatialNavigationRoot
-      isActive={isActive}
-      onDirectionHandledWithoutMovement={onDirectionHandledWithoutMovement}
-    >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Browse & Search</Text>
+    <View style={styles.rootScreen}>
+      {/* 1. Sleek Top Navigation Bar */}
+      <TopNavigationBar
+        activeTab="Explore"
+        onSelectCategory={(cat) => {
+          if (cat === 'All') setSelectedGenre('All');
+          else setSelectedGenre(cat);
+        }}
+      />
+
+      <ScrollView
+        style={styles.mainScrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header & Search Bar */}
+        <View style={styles.headerSection}>
+          <Text style={styles.headerTitle}>Explore & Search Library</Text>
           <Text style={styles.headerSubtitle}>
-            Explore the curated ViewEase entertainment library ({filteredTitles.length} titles)
+            Browse {filteredTitles.length} titles across Web Series, Blockbusters, Anime & Documentaries
           </Text>
+
+          {/* Search Box */}
+          <View style={styles.searchBarWrapper}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by title, genre, director or actor..."
+              placeholderTextColor="rgba(240, 243, 248, 0.45)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable
+                onPress={() => setSearchQuery('')}
+                style={styles.clearSearchBtn}
+              >
+                <Text style={styles.clearSearchText}>✕</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
 
-        {/* Filter Pills - Genre */}
+        {/* Category Filter Pills */}
         <View style={styles.filterSection}>
-          <Text style={styles.filterSectionTitle}>CATEGORIES</Text>
-          <SpatialNavigationNode orientation="horizontal">
-            <View style={styles.pillsRow}>
-              {GENRES.map((genre, idx) => {
-                const isSelected = selectedGenre === genre;
-                const Component = idx === 0 ? DefaultFocus : React.Fragment;
-                return (
-                  <Component key={genre}>
-                    <SpatialNavigationFocusableView onSelect={() => setSelectedGenre(genre)}>
-                      {({ isFocused: pillFocused }) => (
-                        <View
-                          style={[
-                            styles.filterPill,
-                            isSelected && styles.filterPillSelected,
-                            pillFocused && styles.filterPillFocused,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.filterPillText,
-                              isSelected && styles.filterPillTextSelected,
-                              pillFocused && styles.filterPillTextFocused,
-                            ]}
-                          >
-                            {genre}
-                          </Text>
-                        </View>
-                      )}
-                    </SpatialNavigationFocusableView>
-                  </Component>
-                );
-              })}
-            </View>
-          </SpatialNavigationNode>
-        </View>
-
-        {/* Search Presets Row */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterSectionTitle}>POPULAR SEARCHES</Text>
-          <SpatialNavigationNode orientation="horizontal">
-            <View style={styles.pillsRow}>
-              {SEARCH_PRESETS.map((query) => {
-                const isSelected = activeSearchPreset === query;
-                return (
-                  <SpatialNavigationFocusableView
-                    key={query}
-                    onSelect={() => setActiveSearchPreset(query)}
-                  >
-                    {({ isFocused: pillFocused }) => (
-                      <View
-                        style={[
-                          styles.searchPill,
-                          isSelected && styles.searchPillSelected,
-                          pillFocused && styles.searchPillFocused,
-                        ]}
-                      >
-                        <Text style={styles.searchPillIcon}>🔍</Text>
-                        <Text
-                          style={[
-                            styles.searchPillText,
-                            isSelected && styles.searchPillTextSelected,
-                            pillFocused && styles.searchPillTextFocused,
-                          ]}
-                        >
-                          {query}
-                        </Text>
-                      </View>
-                    )}
-                  </SpatialNavigationFocusableView>
-                );
-              })}
-            </View>
-          </SpatialNavigationNode>
-        </View>
-
-        {/* Catalog Grid */}
-        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
-          <SpatialNavigationNode orientation="vertical">
-            <View style={styles.gridCards}>
-              {filteredTitles.map((title) => (
-                <SpatialNavigationFocusableView
-                  key={title.id}
-                  onSelect={() => handleSelectTitle(title)}
+          <Text style={styles.filterSectionTitle}>BROWSE CATEGORIES</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+            {GENRES.map((genre) => {
+              const isSelected = selectedGenre === genre;
+              return (
+                <Pressable
+                  key={genre}
+                  accessibilityRole="button"
+                  onPress={() => setSelectedGenre(genre)}
+                  style={({ hovered }: any) => [
+                    styles.filterPill,
+                    isSelected && styles.filterPillSelected,
+                    hovered && styles.filterPillHovered,
+                  ]}
                 >
-                  {({ isFocused: cardFocused }) => (
-                    <View
-                      style={[
-                        styles.gridCard,
-                        cardFocused && styles.gridCardFocused,
-                      ]}
-                    >
-                      <Image
-                        source={{ uri: title.headerImage }}
-                        style={styles.gridCardImage}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.gridCardOverlay}>
-                        <View style={styles.badgeRow}>
-                          <View style={styles.ratingBadge}>
-                            <Text style={styles.ratingText}>★ {title.rating}</Text>
-                          </View>
-                          <Text style={styles.yearText}>{title.releaseYear}</Text>
-                        </View>
-                        <Text style={styles.gridCardTitle} numberOfLines={1}>
-                          {title.title}
-                        </Text>
-                        <Text style={styles.gridCardGenres} numberOfLines={1}>
-                          {title.genres.join(' • ')}
-                        </Text>
-                      </View>
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      isSelected && styles.filterPillTextSelected,
+                    ]}
+                  >
+                    {genre}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Quick Keyword Pills */}
+        <View style={styles.filterSection}>
+          <Text style={styles.filterSectionTitle}>QUICK SEARCH TAGS</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+            {SEARCH_PRESETS.map((preset) => {
+              const isSelected = preset === 'All Titles' ? searchQuery === '' : searchQuery === preset;
+              return (
+                <Pressable
+                  key={preset}
+                  accessibilityRole="button"
+                  onPress={() => setSearchQuery(preset === 'All Titles' ? '' : preset)}
+                  style={({ hovered }: any) => [
+                    styles.searchPresetPill,
+                    isSelected && styles.searchPresetPillSelected,
+                    hovered && styles.searchPresetPillHovered,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.searchPresetText,
+                      isSelected && styles.searchPresetTextSelected,
+                    ]}
+                  >
+                    #{preset}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Responsive Grid of Cards */}
+        <View style={styles.gridContainer}>
+          {filteredTitles.map((item) => {
+            const isHovered = hoveredCardId === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                accessibilityRole="button"
+                onPress={() => handleSelectTitle(item)}
+                // @ts-ignore
+                onMouseEnter={() => setHoveredCardId(item.id)}
+                onMouseLeave={() => setHoveredCardId(null)}
+                style={({ pressed }: any) => [
+                  styles.gridCard,
+                  isHovered && styles.gridCardHighlighted,
+                  pressed && styles.gridCardPressed,
+                ]}
+              >
+                <Image
+                  source={{ uri: item.headerImage || item.posterImage }}
+                  style={styles.cardImage}
+                  resizeMode="cover"
+                />
+
+                <PlatformLinearGradient
+                  colors={['transparent', 'rgba(11, 13, 17, 0.95)']}
+                  start={{ x: 0, y: 0.4 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.cardGradient}
+                />
+
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <View style={styles.cardMeta}>
+                    <Text style={styles.cardCategory}>{item.category || item.genres[0]}</Text>
+                    <Text style={styles.cardRating}>★ {item.rating}</Text>
+                  </View>
+                </View>
+
+                {/* White Boundary overlay when hovered/focused */}
+                {isHovered && (
+                  <View style={styles.hoverOverlay}>
+                    <View style={styles.playBadge}>
+                      <Text style={styles.playBadgeText}>▶ DETAILS</Text>
                     </View>
-                  )}
-                </SpatialNavigationFocusableView>
-              ))}
-            </View>
-          </SpatialNavigationNode>
-        </ScrollView>
-      </View>
-    </SpatialNavigationRoot>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {filteredTitles.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={styles.emptyTitle}>No matching titles found</Text>
+            <Text style={styles.emptyText}>
+              Try searching for "Quantum", "Kyoto", "RoboBunny", or reset filters.
+            </Text>
+            <Pressable
+              onPress={() => {
+                setSelectedGenre('All');
+                setSearchQuery('');
+              }}
+              style={styles.resetBtn}
+            >
+              <Text style={styles.resetBtnText}>Reset All Filters</Text>
+            </Pressable>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootScreen: {
     flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingTop: scaledPixels(safeZones.titleSafe.vertical),
-    paddingBottom: scaledPixels(safeZones.actionSafe.vertical),
+    backgroundColor: '#0B0D11',
   },
-  header: {
-    marginBottom: scaledPixels(16),
+  mainScrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 60,
+  },
+  headerSection: {
+    paddingHorizontal: 48,
+    paddingTop: 32,
+    paddingBottom: 20,
   },
   headerTitle: {
+    fontSize: 32,
+    fontWeight: '900',
     color: colors.text,
-    fontSize: scaledPixels(38),
-    fontWeight: '800',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(18),
-    marginTop: scaledPixels(4),
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 6,
+  },
+  searchBarWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#161B22',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 50,
+    marginTop: 18,
+    maxWidth: 700,
+  },
+  searchIcon: {
+    fontSize: 18,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    outlineStyle: 'none' as any,
+  },
+  clearSearchBtn: {
+    padding: 6,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  clearSearchText: {
+    color: colors.textMuted,
+    fontSize: 14,
   },
   filterSection: {
-    marginBottom: scaledPixels(14),
+    paddingHorizontal: 48,
+    marginBottom: 16,
   },
   filterSectionTitle: {
-    color: colors.textTertiary,
-    fontSize: scaledPixels(13),
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textMuted,
     letterSpacing: 1,
-    marginBottom: scaledPixels(8),
+    marginBottom: 10,
+    textTransform: 'uppercase',
   },
   pillsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    gap: 10,
   },
   filterPill: {
-    backgroundColor: colors.card,
-    borderRadius: scaledPixels(20),
-    paddingHorizontal: scaledPixels(18),
-    paddingVertical: scaledPixels(10),
-    marginEnd: scaledPixels(12),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    // @ts-ignore
+    cursor: 'pointer',
   },
   filterPillSelected: {
-    borderColor: colors.primary,
-    backgroundColor: 'rgba(229, 169, 60, 0.16)',
-  },
-  filterPillFocused: {
     backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.06 }],
+    borderColor: colors.primary,
+  },
+  filterPillHovered: {
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterPillText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(16),
+    fontSize: 13,
     fontWeight: '600',
+    color: colors.textMuted,
   },
   filterPillTextSelected: {
-    color: colors.primaryLight,
-    fontWeight: '700',
+    color: '#0B0D11',
+    fontWeight: '800',
   },
-  filterPillTextFocused: {
-    color: colors.textOnPrimary,
-    fontWeight: '700',
+  searchPresetPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  searchPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundElevated,
-    borderRadius: scaledPixels(16),
-    paddingHorizontal: scaledPixels(14),
-    paddingVertical: scaledPixels(8),
-    marginEnd: scaledPixels(10),
-    borderWidth: scaledPixels(1),
-    borderColor: colors.border,
+  searchPresetPillSelected: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(229, 169, 60, 0.15)',
   },
-  searchPillSelected: {
-    borderColor: colors.primaryLight,
-    backgroundColor: 'rgba(229, 169, 60, 0.12)',
+  searchPresetPillHovered: {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  searchPillFocused: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.05 }],
-  },
-  searchPillIcon: {
-    fontSize: scaledPixels(13),
-    marginEnd: scaledPixels(6),
-  },
-  searchPillText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(14),
+  searchPresetText: {
+    fontSize: 12,
+    color: colors.textMuted,
     fontWeight: '500',
   },
-  searchPillTextSelected: {
-    color: colors.primaryLight,
+  searchPresetTextSelected: {
+    color: colors.primary,
     fontWeight: '700',
   },
-  searchPillTextFocused: {
-    color: colors.textOnPrimary,
-    fontWeight: '700',
-  },
-  gridScroll: {
-    flex: 1,
-    marginTop: scaledPixels(10),
-  },
-  gridCards: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    paddingHorizontal: 48,
+    paddingTop: 16,
+    gap: 20,
   },
   gridCard: {
-    width: scaledPixels(340),
-    height: scaledPixels(200),
-    borderRadius: scaledPixels(10),
+    width: 270,
+    height: 156,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.card,
-    marginEnd: scaledPixels(24),
-    marginBottom: scaledPixels(24),
-    borderWidth: scaledPixels(3),
+    position: 'relative',
+    backgroundColor: '#161B22',
+    borderWidth: 2,
     borderColor: 'transparent',
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  gridCardFocused: {
-    borderColor: colors.primary,
+  gridCardHighlighted: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 22px rgba(255, 255, 255, 0.55)',
     transform: [{ scale: 1.06 }],
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: scaledPixels(14),
-    elevation: 10,
+    zIndex: 50,
   },
-  gridCardImage: {
+  gridCardPressed: {
+    transform: [{ scale: 1.02 }],
+  },
+  cardImage: {
     width: '100%',
     height: '100%',
   },
-  gridCardOverlay: {
+  cardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardInfo: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(11, 13, 17, 0.92)',
-    paddingHorizontal: scaledPixels(14),
-    paddingVertical: scaledPixels(10),
+    bottom: 8,
+    left: 10,
+    right: 10,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: scaledPixels(4),
-  },
-  ratingBadge: {
-    backgroundColor: 'rgba(229, 169, 60, 0.2)',
-    paddingHorizontal: scaledPixels(6),
-    paddingVertical: scaledPixels(2),
-    borderRadius: scaledPixels(4),
-  },
-  ratingText: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(12),
-    fontWeight: '700',
-  },
-  yearText: {
-    color: colors.textTertiary,
-    fontSize: scaledPixels(12),
-  },
-  gridCardTitle: {
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: scaledPixels(17),
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 3,
+  },
+  cardCategory: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  cardRating: {
+    fontSize: 10,
+    color: colors.primary,
     fontWeight: '700',
   },
-  gridCardGenres: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(13),
-    marginTop: scaledPixels(2),
+  hoverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  playBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#0B0D11',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 6,
+  },
+  resetBtn: {
+    marginTop: 18,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  resetBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0B0D11',
   },
 });

@@ -18,7 +18,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.FocusLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
+exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.FocusLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.TopNavigationBar = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
 // Main App Navigator
 var AppNavigator_1 = require("./navigation/AppNavigator");
 Object.defineProperty(exports, "AppNavigator", { enumerable: true, get: function () { return __importDefault(AppNavigator_1).default; } });
@@ -42,6 +42,8 @@ var VideoPlayer_1 = require("./components/player/VideoPlayer");
 Object.defineProperty(exports, "VideoPlayer", { enumerable: true, get: function () { return __importDefault(VideoPlayer_1).default; } });
 var SeekBar_1 = require("./components/player/SeekBar");
 Object.defineProperty(exports, "SeekBar", { enumerable: true, get: function () { return __importDefault(SeekBar_1).default; } });
+var TopNavigationBar_1 = require("./components/TopNavigationBar");
+Object.defineProperty(exports, "TopNavigationBar", { enumerable: true, get: function () { return TopNavigationBar_1.TopNavigationBar; } });
 // Screens
 var HomeScreen_1 = require("./screens/HomeScreen");
 Object.defineProperty(exports, "HomeScreen", { enumerable: true, get: function () { return __importDefault(HomeScreen_1).default; } });

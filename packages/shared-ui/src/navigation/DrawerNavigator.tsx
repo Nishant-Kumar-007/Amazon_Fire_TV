@@ -21,17 +21,10 @@ function DrawerSyncWrapper({ drawerNavRef }: { drawerNavRef: React.MutableRefObj
   const { isOpen: isMenuOpen } = useMenuContext();
   const navigation = useNavigation();
 
-  // Capture the drawer navigation object (useNavigation inside a Drawer.Screen gets the Drawer navigator)
+  // Capture the drawer navigation object
   useEffect(() => {
     drawerNavRef.current = navigation;
   }, [navigation, drawerNavRef]);
-
-  // Open drawer on mount if menu context says it should be open
-  useEffect(() => {
-    if (isMenuOpen) {
-      navigation.dispatch(DrawerActions.openDrawer());
-    }
-  }, []);
 
   return null;
 }
@@ -45,7 +38,7 @@ export default function DrawerNavigator() {
       <Drawer.Navigator
         drawerContent={CustomDrawerContent}
         initialRouteName="Home"
-        defaultStatus="open"
+        defaultStatus="closed"
         screenOptions={{
           headerShown: false,
           drawerActiveBackgroundColor: '#3498db',

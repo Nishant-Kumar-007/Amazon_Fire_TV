@@ -133,6 +133,10 @@ class ViewEaseStorageService {
     return this.watchlistSet.has(id);
   }
 
+  public isInMyList(id: string): boolean {
+    return this.isInWatchlist(id);
+  }
+
   public toggleWatchlist(id: string): boolean {
     let newState = false;
     if (this.watchlistSet.has(id)) {
@@ -144,6 +148,11 @@ class ViewEaseStorageService {
     }
     this.persist();
     return newState;
+  }
+
+  public toggleMyList(titleOrId: { id: string } | string): boolean {
+    const id = typeof titleOrId === 'string' ? titleOrId : titleOrId.id;
+    return this.toggleWatchlist(id);
   }
 
   public getWatchlist(): string[] {

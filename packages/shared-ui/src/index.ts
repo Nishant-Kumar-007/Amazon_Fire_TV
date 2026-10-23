@@ -16,6 +16,7 @@ export { ViewEaseAssistOverlay } from './components/player/ViewEaseAssistOverlay
 export { default as VideoOverlay } from './components/player/VideoOverlay';
 export { default as VideoPlayer } from './components/player/VideoPlayer';
 export { default as SeekBar } from './components/player/SeekBar';
+export { TopNavigationBar } from './components/TopNavigationBar';
 
 // Screens
 export { default as HomeScreen } from './screens/HomeScreen';

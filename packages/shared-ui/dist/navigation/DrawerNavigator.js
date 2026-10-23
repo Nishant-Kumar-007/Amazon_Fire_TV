@@ -22,23 +22,17 @@ const Drawer = (0, drawer_1.createDrawerNavigator)();
 function DrawerSyncWrapper({ drawerNavRef }) {
     const { isOpen: isMenuOpen } = (0, MenuContext_1.useMenuContext)();
     const navigation = (0, native_1.useNavigation)();
-    // Capture the drawer navigation object (useNavigation inside a Drawer.Screen gets the Drawer navigator)
+    // Capture the drawer navigation object
     (0, react_1.useEffect)(() => {
         drawerNavRef.current = navigation;
     }, [navigation, drawerNavRef]);
-    // Open drawer on mount if menu context says it should be open
-    (0, react_1.useEffect)(() => {
-        if (isMenuOpen) {
-            navigation.dispatch(native_1.DrawerActions.openDrawer());
-        }
-    }, []);
     return null;
 }
 function DrawerNavigator() {
     const styles = drawerStyles;
     const { isOpen: isMenuOpen } = (0, MenuContext_1.useMenuContext)();
     const drawerNavRef = (0, react_1.useRef)(null);
-    const navigationContent = (<Drawer.Navigator drawerContent={CustomDrawerContent_1.default} initialRouteName="Home" defaultStatus="open" screenOptions={{
+    const navigationContent = (<Drawer.Navigator drawerContent={CustomDrawerContent_1.default} initialRouteName="Home" defaultStatus="closed" screenOptions={{
             headerShown: false,
             drawerActiveBackgroundColor: '#3498db',
             drawerActiveTintColor: '#ffffff',

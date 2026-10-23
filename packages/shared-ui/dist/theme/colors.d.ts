@@ -15,6 +15,7 @@ export declare const colors: {
     text: string;
     textSecondary: string;
     textTertiary: string;
+    textMuted: string;
     textOnPrimary: string;
     textAccent: string;
     border: string;
