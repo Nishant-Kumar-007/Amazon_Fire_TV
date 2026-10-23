@@ -140,20 +140,20 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
 
       {/* Right: Quick Tools & Account */}
       <View style={styles.rightActionsSection}>
-        {/* Parity Lab Diagnostics Quick Link */}
+        {/* ViewEase TwinRun Diagnostics Quick Link */}
         <Pressable
           accessibilityRole="button"
           onPress={() => navigation.navigate('ParityLab')}
           // @ts-ignore
-          onMouseEnter={() => setHoveredTab('ParityLab')}
+          onMouseEnter={() => setHoveredTab('TwinRun')}
           onMouseLeave={() => setHoveredTab(null)}
           style={({ hovered }: any) => [
             styles.parityLabBtn,
             hovered && styles.parityLabBtnHovered,
           ]}
         >
-          <Text style={styles.parityLabIcon}>⚖</Text>
-          <Text style={styles.parityLabText}>Parity Lab</Text>
+          <Text style={styles.parityLabIcon}>⚡</Text>
+          <Text style={styles.parityLabText}>TwinRun</Text>
         </Pressable>
 
 
@@ -223,10 +223,10 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
                   hovered && styles.moreMenuItemHovered,
                 ]}
               >
-                <Text style={styles.moreItemIcon}>⚖</Text>
+                <Text style={styles.moreItemIcon}>⚡</Text>
                 <View>
-                  <Text style={styles.moreItemTitle}>ViewEase Parity Lab</Text>
-                  <Text style={styles.moreItemSub}>Actual cross-platform visual & behavioral evidence</Text>
+                  <Text style={styles.moreItemTitle}>ViewEase TwinRun</Text>
+                  <Text style={styles.moreItemSub}>Synchronized cross-platform replay & evidence theatre</Text>
                 </View>
               </Pressable>
 
@@ -402,7 +402,7 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
                     hovered && styles.quickLinkBtnHovered,
                   ]}
                 >
-                  <Text style={styles.quickLinkText}>⚖ ViewEase Parity Lab</Text>
+                  <Text style={styles.quickLinkText}>⚡ ViewEase TwinRun</Text>
                 </Pressable>
               </View>
             </View>

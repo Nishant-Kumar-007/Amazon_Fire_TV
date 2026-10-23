@@ -17,7 +17,7 @@
   - [1. Cinematic Entertainment Hub](#1-cinematic-entertainment-hub)
   - [2. ViewEase Assist Companion](#2-viewease-assist-companion)
   - [3. TVBridge™ Shared Compatibility Layer](#3-tvbridge-shared-compatibility-layer)
-  - [4. ViewEase Parity Lab — Actual Cross-Platform Evidence](#4-viewease-parity-lab--actual-cross-platform-evidence)
+  - [4. ViewEase TwinRun — Synchronized Cross-Platform Replay & Evidence Theatre](#4-viewease-twinrun--synchronized-cross-platform-replay--evidence-theatre)
   - [5. Persistence: Continue Watching & My List](#5-persistence-continue-watching--my-list)
 - [Architecture & Monorepo Structure](#architecture--monorepo-structure)
 - [Platform Support & Validation Status](#platform-support--validation-status)
@@ -68,37 +68,34 @@ A resilient TV interaction framework located in `packages/shared-ui/src/tvbridge
 - **Focus Restoration State Machine (`FocusRestorationManager`)**: Remembers and restores the exact focused node when navigating back from modal drawers, title details, or full-screen playback.
 - **Platform Capability Detection (`getTVPlatformCapabilities`)**: Detects operating system capabilities, hardware acceleration support, and optimal video buffer settings.
 
-### 4. ViewEase Parity Lab — Actual Cross-Platform Evidence
-Accessible directly via the **⚖ Parity Lab** header button or **Settings > Launch Parity Lab**:
-- **Actual Evidence-Driven Comparison**: Inspects verified evidence collected from actual Fire OS and Vega OS runs. No fabricated green PASS indicators or hardcoded success metrics.
+### 4. ViewEase TwinRun — Synchronized Cross-Platform Replay & Evidence Theatre
+*One experience. Two platforms. Verifiable evidence.*
+Accessible directly via the **⚡ TwinRun** header button or **Settings > Launch TwinRun Theatre**:
+- **TwinRun Playback Theatre**: Synchronized side-by-side dual video player comparing actual screen recordings from Fire OS and Vega OS runs.
+  - **Shared Play/Pause & Scrubber**: Synchronizes playback timestamps, seeking, and frame navigation.
+  - **Jump to Checkpoint**: Instantly seeks both platform players to any of the 12 canonical checkpoints.
+- **Truthful Evidence Availability & Provenance**:
+  - **Fire OS**: Verified local recording (`/recordings/fireos_sample_run.mp4`, SHA-256 `9f8f97937496...`).
+  - **Vega OS**: Honestly marked **Awaiting Capture / Untested** until executed in a Kepler-compatible environment. Zero fabricated green PASS indicators or fake numbers.
+  - **Provenance Manifest**: Direct Git commit (`5b2c8fa`), file integrity hashes, and environment tags.
+- **Four Verifiable Modes**:
+  1. **▶ Synchronized Replay**: Side-by-side video playback with unified timeline and millisecond timestamp inspection.
+  2. **🔀 Live Difference View**: Real-time HTML5 Canvas pixel difference extractor and difference heatmap computed from actual video frames with draggable split slider.
+  3. **📋 Behavior Replay**: 12-checkpoint audit table tracking semantic screen transitions, focused control IDs, player states, and focus restoration tokens.
+  4. **🎬 Live Viewer Demo & Assist**: Dedicated live playback sandbox demonstrating functional ViewEase Assist overlay pausing, context inspection, and state restoration.
 - **Canonical 12-Checkpoint Replay Scenario**:
-  1. `cp-01-launch`: Application Launch from OS launcher
-  2. `cp-02-home`: Home screen render & spatial nav readiness
+  1. `cp-01-launch`: Application bootstrap from OS launcher
+  2. `cp-02-home`: Full Home screen render & spatial nav focus
   3. `cp-03-featured`: Navigate focus to featured hero CTA
   4. `cp-04-details`: Open Title Details modal
   5. `cp-05-video-start`: Start hardware-accelerated video playback
-  6. `cp-06-video-paused`: Pause at deterministic timestamp (00:03.500)
-  7. `cp-07-assist-open`: Mount ViewEase Assist overlay
+  6. `cp-06-video-paused`: Deterministic pause at timestamp `00:03.500`
+  7. `cp-07-assist-open`: Mount ViewEase Assist accessibility overlay
   8. `cp-08-assist-explain`: Inspect contextual scene explanation
   9. `cp-09-assist-close`: Dismiss Assist overlay back to video player
-  10. `cp-10-playback-preserved`: Verify playback position & paused state immutability
+  10. `cp-10-playback-preserved`: Verify playback position remains locked at `00:03.500`
   11. `cp-11-focus-restored`: Verify spatial focus restores to expected action node
   12. `cp-12-return-home`: Return from player to originating Home hierarchy
-- **Visual Comparison Engine**:
-  - **Side-by-Side Mode**: Side-by-side rendering with screenshot dimensions and SHA-256 integrity hashes.
-  - **Interactive Split Slider**: Draggable / Remote DPAD (Left/Right) comparison slider with live split reveal.
-  - **Visual Difference Heatmap**: Highlights layout shifts and font rasterization variance with color thermal mapping.
-  - **Behavioral Equivalence Audit**: Independent semantic state comparison table (screen IDs, focused element IDs, player state, overlay visibility).
-- **Mathematical Similarity Formula**:
-  $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} \frac{(R_{1i}-R_{2i})^2 + (G_{1i}-G_{2i})^2 + (B_{1i}-B_{2i})^2}{3}}$$
-  $$\text{Similarity \%} = \left(1 - \frac{\text{Pixel Mismatches}}{\text{Total Pixels}}\right) \times 100\%$$
-  *(GPU antialiasing and subpixel dithering below $\Delta E < 18$ are tolerated to expose genuine layout deltas).*
-- **Local Evidence Collection Tooling**:
-  ```bash
-  # Execute the canonical collector across host ADB devices and Vega Kepler:
-  npm run parity:collect
-  ```
-- **Honest Runtime Integration & Empty State**: If no bundle is imported, Parity Lab clearly shows the unverified state with instructions to run the collector rather than fabricating success.
 
 ### 5. Persistence: Continue Watching & My List
 - Seamless local storage via `StorageService` using `@react-native-async-storage/async-storage`.

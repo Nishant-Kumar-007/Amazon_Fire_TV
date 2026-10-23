@@ -137,15 +137,15 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
 
       {/* Right: Quick Tools & Account */}
       <react_native_1.View style={styles.rightActionsSection}>
-        {/* Parity Lab Diagnostics Quick Link */}
+        {/* ViewEase TwinRun Diagnostics Quick Link */}
         <react_native_1.Pressable accessibilityRole="button" onPress={() => navigation.navigate('ParityLab')} 
     // @ts-ignore
-    onMouseEnter={() => setHoveredTab('ParityLab')} onMouseLeave={() => setHoveredTab(null)} style={({ hovered }) => [
+    onMouseEnter={() => setHoveredTab('TwinRun')} onMouseLeave={() => setHoveredTab(null)} style={({ hovered }) => [
             styles.parityLabBtn,
             hovered && styles.parityLabBtnHovered,
         ]}>
-          <react_native_1.Text style={styles.parityLabIcon}>⚖</react_native_1.Text>
-          <react_native_1.Text style={styles.parityLabText}>Parity Lab</react_native_1.Text>
+          <react_native_1.Text style={styles.parityLabIcon}>⚡</react_native_1.Text>
+          <react_native_1.Text style={styles.parityLabText}>TwinRun</react_native_1.Text>
         </react_native_1.Pressable>
 
 
@@ -191,10 +191,10 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
             styles.moreMenuItem,
             hovered && styles.moreMenuItemHovered,
         ]}>
-                <react_native_1.Text style={styles.moreItemIcon}>⚖</react_native_1.Text>
+                <react_native_1.Text style={styles.moreItemIcon}>⚡</react_native_1.Text>
                 <react_native_1.View>
-                  <react_native_1.Text style={styles.moreItemTitle}>ViewEase Parity Lab</react_native_1.Text>
-                  <react_native_1.Text style={styles.moreItemSub}>Actual cross-platform visual & behavioral evidence</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemTitle}>ViewEase TwinRun</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>Synchronized cross-platform replay & evidence theatre</react_native_1.Text>
                 </react_native_1.View>
               </react_native_1.Pressable>
 
@@ -327,7 +327,7 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
             styles.quickLinkBtn,
             hovered && styles.quickLinkBtnHovered,
         ]}>
-                  <react_native_1.Text style={styles.quickLinkText}>⚖ ViewEase Parity Lab</react_native_1.Text>
+                  <react_native_1.Text style={styles.quickLinkText}>⚡ ViewEase TwinRun</react_native_1.Text>
                 </react_native_1.Pressable>
               </react_native_1.View>
             </react_native_1.View>

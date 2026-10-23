@@ -1,3 +1,7 @@
-import React from 'react';
-export default function ParityLabScreen(): React.JSX.Element;
+import TwinRunScreen from './TwinRunScreen';
+/**
+ * ViewEase TwinRun
+ * Replaces ParityLab with the genuine interactive cross-platform evidence theatre.
+ */
+export default TwinRunScreen;
 //# sourceMappingURL=ParityLabScreen.d.ts.map

@@ -18,7 +18,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.ParityLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.TopNavigationBar = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
+exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.TwinRunScreen = exports.ParityLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.TopNavigationBar = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
 // Main App Navigator
 var AppNavigator_1 = require("./navigation/AppNavigator");
 Object.defineProperty(exports, "AppNavigator", { enumerable: true, get: function () { return __importDefault(AppNavigator_1).default; } });
@@ -59,7 +59,12 @@ var SettingsScreen_1 = require("./screens/SettingsScreen");
 Object.defineProperty(exports, "SettingsScreen", { enumerable: true, get: function () { return __importDefault(SettingsScreen_1).default; } });
 var ParityLabScreen_1 = require("./screens/ParityLabScreen");
 Object.defineProperty(exports, "ParityLabScreen", { enumerable: true, get: function () { return __importDefault(ParityLabScreen_1).default; } });
-// Parity Lab Engine & Evidence
+var TwinRunScreen_1 = require("./screens/TwinRunScreen");
+Object.defineProperty(exports, "TwinRunScreen", { enumerable: true, get: function () { return __importDefault(TwinRunScreen_1).default; } });
+// TwinRun & Parity Engine
+__exportStar(require("./twinrun/types"), exports);
+__exportStar(require("./twinrun/provenanceManifest"), exports);
+__exportStar(require("./twinrun/canonicalTwinRun"), exports);
 __exportStar(require("./parity/types"), exports);
 __exportStar(require("./parity/comparisonEngine"), exports);
 __exportStar(require("./parity/canonicalScenario"), exports);

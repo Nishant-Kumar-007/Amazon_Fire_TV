@@ -50,7 +50,7 @@ function CustomDrawerContent(props) {
         { name: 'Home', label: 'Home', icon: '🏠' },
         { name: 'Explore', label: 'Browse', icon: '🔍' },
         { name: 'TV', label: 'My List', icon: '🔖' },
-        { name: 'ParityLab', label: 'Parity Lab', icon: '⚖' },
+        { name: 'ParityLab', label: 'TwinRun', icon: '⚡' },
     ];
     const onDirectionHandledWithoutMovement = (0, react_1.useCallback)((movement) => {
         if (movement === (0, rtl_1.getCloseDrawerDirection)()) {

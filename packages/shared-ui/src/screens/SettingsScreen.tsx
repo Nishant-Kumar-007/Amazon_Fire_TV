@@ -75,9 +75,9 @@ export default function SettingsScreen() {
                 <View style={styles.diagBadge}>
                   <Text style={styles.diagBadgeText}>ENGINEERING SUITE</Text>
                 </View>
-                <Text style={styles.diagTitle}>ViewEase Parity Lab — Cross-Platform Evidence</Text>
+                <Text style={styles.diagTitle}>ViewEase TwinRun — Synchronized Evidence Theatre</Text>
                 <Text style={styles.diagDesc}>
-                  Visual and behavioral cross-platform evidence engine for Fire OS and Vega OS. Inspect canonical replay checkpoints, side-by-side renders, split comparison slider, and difference heatmap.
+                  One experience. Two platforms. Verifiable evidence. Inspect synchronized video recordings of Fire OS and Vega OS runs, live canvas pixel difference heatmap, and 12 canonical behavioral checkpoints.
                 </Text>
               </View>
 
@@ -97,7 +97,7 @@ export default function SettingsScreen() {
                             btnFocused && styles.diagBtnTextFocused,
                           ]}
                         >
-                          ⚖ Launch Parity Lab
+                          ⚡ Launch TwinRun Theatre
                         </Text>
                       </View>
                     )}

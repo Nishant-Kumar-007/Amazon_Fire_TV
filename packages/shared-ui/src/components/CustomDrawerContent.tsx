@@ -23,7 +23,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     { name: 'Home', label: 'Home', icon: '🏠' },
     { name: 'Explore', label: 'Browse', icon: '🔍' },
     { name: 'TV', label: 'My List', icon: '🔖' },
-    { name: 'ParityLab', label: 'Parity Lab', icon: '⚖' },
+    { name: 'ParityLab', label: 'TwinRun', icon: '⚡' },
   ] as const;
 
   const onDirectionHandledWithoutMovement = useCallback(

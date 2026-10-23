@@ -1,1 +1,1 @@
-{"version":3,"file":"ParityLabScreen.d.ts","sourceRoot":"","sources":["../../src/screens/ParityLabScreen.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA4D,MAAM,OAAO,CAAC;AA+BjF,MAAM,CAAC,OAAO,UAAU,eAAe,sBAiqBtC"}
+{"version":3,"file":"ParityLabScreen.d.ts","sourceRoot":"","sources":["../../src/screens/ParityLabScreen.tsx"],"names":[],"mappings":"AAAA,OAAO,aAAa,MAAM,iBAAiB,CAAC;AAE5C;;;GAGG;AACH,eAAe,aAAa,CAAC"}
