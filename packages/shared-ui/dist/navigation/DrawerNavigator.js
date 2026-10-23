@@ -17,7 +17,7 @@ const HomeScreen_1 = __importDefault(require("../screens/HomeScreen"));
 const ExploreScreen_1 = __importDefault(require("../screens/ExploreScreen"));
 const TVScreen_1 = __importDefault(require("../screens/TVScreen"));
 const SettingsScreen_1 = __importDefault(require("../screens/SettingsScreen"));
-const FocusLabScreen_1 = __importDefault(require("../screens/FocusLabScreen"));
+const ParityLabScreen_1 = __importDefault(require("../screens/ParityLabScreen"));
 const Drawer = (0, drawer_1.createDrawerNavigator)();
 function DrawerSyncWrapper({ drawerNavRef }) {
     const { isOpen: isMenuOpen } = (0, MenuContext_1.useMenuContext)();
@@ -55,8 +55,8 @@ function DrawerNavigator() {
         <Drawer.Screen name="TV" component={TVScreen_1.default} options={{
             drawerLabel: 'My List',
         }}/>
-        <Drawer.Screen name="FocusLab" component={FocusLabScreen_1.default} options={{
-            drawerLabel: 'FocusLab™',
+        <Drawer.Screen name="ParityLab" component={ParityLabScreen_1.default} options={{
+            drawerLabel: 'Parity Lab',
         }}/>
         <Drawer.Screen name="Settings" component={SettingsScreen_1.default} options={{
             drawerLabel: 'Settings',

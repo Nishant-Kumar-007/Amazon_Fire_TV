@@ -23,6 +23,7 @@
     "build:all": "yarn workspaces foreach -A -pt run build",
     "build:vega": "yarn workspace @multi-tv/vega run build",
     "build:vega:debug": "yarn workspace @multi-tv/vega run build:debug",
+    "parity:collect": "node scripts/parity-collector/collect-evidence.js",
     "test:all": "yarn workspaces foreach -A -pt run test",
     "lint:all": "yarn workspaces foreach -A -pt run lint",
     "typecheck": "yarn workspaces foreach -A -pt run typecheck",

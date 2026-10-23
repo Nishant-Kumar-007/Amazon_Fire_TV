@@ -13,7 +13,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ExploreScreen from '../screens/ExploreScreen';
 import TVScreen from '../screens/TVScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import FocusLabScreen from '../screens/FocusLabScreen';
+import ParityLabScreen from '../screens/ParityLabScreen';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -77,10 +77,10 @@ export default function DrawerNavigator() {
           }}
         />
         <Drawer.Screen
-          name="FocusLab"
-          component={FocusLabScreen}
+          name="ParityLab"
+          component={ParityLabScreen}
           options={{
-            drawerLabel: 'FocusLab™',
+            drawerLabel: 'Parity Lab',
           }}
         />
         <Drawer.Screen

@@ -50,8 +50,8 @@ export default function SettingsScreen() {
     setTimeout(() => setCacheStatus(null), 4000);
   }, []);
 
-  const launchFocusLab = useCallback(() => {
-    navigation.navigate('FocusLab');
+  const launchParityLab = useCallback(() => {
+    navigation.navigate('ParityLab');
   }, [navigation]);
 
   return (
@@ -75,15 +75,15 @@ export default function SettingsScreen() {
                 <View style={styles.diagBadge}>
                   <Text style={styles.diagBadgeText}>ENGINEERING SUITE</Text>
                 </View>
-                <Text style={styles.diagTitle}>FocusLab™ Remote & TV Diagnostics</Text>
+                <Text style={styles.diagTitle}>ViewEase Parity Lab — Cross-Platform Evidence</Text>
                 <Text style={styles.diagDesc}>
-                  Validate remote navigation keybindings, spatial focus restoration, 16:9 safe-zone compliance, and generate compatibility reports.
+                  Visual and behavioral cross-platform evidence engine for Fire OS and Vega OS. Inspect canonical replay checkpoints, side-by-side renders, split comparison slider, and difference heatmap.
                 </Text>
               </View>
 
               <SpatialNavigationNode orientation="horizontal">
                 <DefaultFocus>
-                  <SpatialNavigationFocusableView onSelect={launchFocusLab}>
+                  <SpatialNavigationFocusableView onSelect={launchParityLab}>
                     {({ isFocused: btnFocused }) => (
                       <View
                         style={[
@@ -97,7 +97,7 @@ export default function SettingsScreen() {
                             btnFocused && styles.diagBtnTextFocused,
                           ]}
                         >
-                          🔬 Launch FocusLab
+                          ⚖ Launch Parity Lab
                         </Text>
                       </View>
                     )}

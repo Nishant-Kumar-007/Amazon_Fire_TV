@@ -140,20 +140,20 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
 
       {/* Right: Quick Tools & Account */}
       <View style={styles.rightActionsSection}>
-        {/* FocusLab Diagnostics Quick Link */}
+        {/* Parity Lab Diagnostics Quick Link */}
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('FocusLab')}
+          onPress={() => navigation.navigate('ParityLab')}
           // @ts-ignore
-          onMouseEnter={() => setHoveredTab('FocusLab')}
+          onMouseEnter={() => setHoveredTab('ParityLab')}
           onMouseLeave={() => setHoveredTab(null)}
           style={({ hovered }: any) => [
-            styles.focusLabBtn,
-            hovered && styles.focusLabBtnHovered,
+            styles.parityLabBtn,
+            hovered && styles.parityLabBtnHovered,
           ]}
         >
-          <Text style={styles.focusLabIcon}>⚡</Text>
-          <Text style={styles.focusLabText}>FocusLab™</Text>
+          <Text style={styles.parityLabIcon}>⚖</Text>
+          <Text style={styles.parityLabText}>Parity Lab</Text>
         </Pressable>
 
 
@@ -216,17 +216,17 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
               <Pressable
                 onPress={() => {
                   setMoreMenuVisible(false);
-                  navigation.navigate('FocusLab');
+                  navigation.navigate('ParityLab');
                 }}
                 style={({ hovered }: any) => [
                   styles.moreMenuItem,
                   hovered && styles.moreMenuItemHovered,
                 ]}
               >
-                <Text style={styles.moreItemIcon}>⚡</Text>
+                <Text style={styles.moreItemIcon}>⚖</Text>
                 <View>
-                  <Text style={styles.moreItemTitle}>FocusLab™ Diagnostics</Text>
-                  <Text style={styles.moreItemSub}>Test remote D-pad, Fire OS & Vega OS runtime</Text>
+                  <Text style={styles.moreItemTitle}>ViewEase Parity Lab</Text>
+                  <Text style={styles.moreItemSub}>Actual cross-platform visual & behavioral evidence</Text>
                 </View>
               </Pressable>
 
@@ -395,14 +395,14 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
                 <Pressable
                   onPress={() => {
                     setAccountModalVisible(false);
-                    navigation.navigate('FocusLab');
+                    navigation.navigate('ParityLab');
                   }}
                   style={({ hovered }: any) => [
                     styles.quickLinkBtn,
                     hovered && styles.quickLinkBtnHovered,
                   ]}
                 >
-                  <Text style={styles.quickLinkText}>⚡ FocusLab™ Diagnostics</Text>
+                  <Text style={styles.quickLinkText}>⚖ ViewEase Parity Lab</Text>
                 </Pressable>
               </View>
             </View>
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  focusLabBtn: {
+  parityLabBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(229, 169, 60, 0.15)',
@@ -569,18 +569,18 @@ const styles = StyleSheet.create({
     // @ts-ignore
     cursor: 'pointer',
   },
-  focusLabBtnHovered: {
+  parityLabBtnHovered: {
     backgroundColor: 'rgba(229, 169, 60, 0.3)',
     borderColor: colors.primary,
     // @ts-ignore
     boxShadow: '0 0 12px rgba(229, 169, 60, 0.4)',
   },
-  focusLabIcon: {
+  parityLabIcon: {
     fontSize: 13,
     color: colors.primary,
     marginRight: 5,
   },
-  focusLabText: {
+  parityLabText: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary,

@@ -20,13 +20,13 @@ export type RootStackParamList = {
         id?: string;
         startTime?: number;
     };
-    FocusLab: undefined;
+    ParityLab: undefined;
 };
 export type DrawerParamList = {
     Home: undefined;
     Explore: undefined;
     TV: undefined;
-    FocusLab: undefined;
+    ParityLab: undefined;
     Settings: undefined;
 };
 //# sourceMappingURL=types.d.ts.map

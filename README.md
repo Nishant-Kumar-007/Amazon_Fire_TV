@@ -17,7 +17,7 @@
   - [1. Cinematic Entertainment Hub](#1-cinematic-entertainment-hub)
   - [2. ViewEase Assist Companion](#2-viewease-assist-companion)
   - [3. TVBridge™ Shared Compatibility Layer](#3-tvbridge-shared-compatibility-layer)
-  - [4. FocusLab™ Built-In Diagnostics](#4-focuslab-built-in-diagnostics)
+  - [4. ViewEase Parity Lab — Actual Cross-Platform Evidence](#4-viewease-parity-lab--actual-cross-platform-evidence)
   - [5. Persistence: Continue Watching & My List](#5-persistence-continue-watching--my-list)
 - [Architecture & Monorepo Structure](#architecture--monorepo-structure)
 - [Platform Support & Validation Status](#platform-support--validation-status)
@@ -68,12 +68,37 @@ A resilient TV interaction framework located in `packages/shared-ui/src/tvbridge
 - **Focus Restoration State Machine (`FocusRestorationManager`)**: Remembers and restores the exact focused node when navigating back from modal drawers, title details, or full-screen playback.
 - **Platform Capability Detection (`getTVPlatformCapabilities`)**: Detects operating system capabilities, hardware acceleration support, and optimal video buffer settings.
 
-### 4. FocusLab™ Built-In Diagnostics
-Accessible directly from **Settings > FocusLab™ Diagnostics**:
-- **Live Remote Event Telemetry**: 50-event bounded circular buffer capturing D-pad direction, key code, timestamp, and target node.
-- **Hardware & Runtime Inspector**: Reports platform OS, Hermes engine status, pixel ratio, window dimensions, and focus engine version.
-- **Automated Diagnostic Suite**: Runs 6 repeatable in-app test scenarios verifying catalog integrity, assist provider capabilities, spatial navigation boundaries, storage read/write performance, and focus restoration contracts.
-- **Compatibility Report Generator**: Generates clean, copyable markdown diagnostic summaries directly on the TV screen.
+### 4. ViewEase Parity Lab — Actual Cross-Platform Evidence
+Accessible directly via the **⚖ Parity Lab** header button or **Settings > Launch Parity Lab**:
+- **Actual Evidence-Driven Comparison**: Inspects verified evidence collected from actual Fire OS and Vega OS runs. No fabricated green PASS indicators or hardcoded success metrics.
+- **Canonical 12-Checkpoint Replay Scenario**:
+  1. `cp-01-launch`: Application Launch from OS launcher
+  2. `cp-02-home`: Home screen render & spatial nav readiness
+  3. `cp-03-featured`: Navigate focus to featured hero CTA
+  4. `cp-04-details`: Open Title Details modal
+  5. `cp-05-video-start`: Start hardware-accelerated video playback
+  6. `cp-06-video-paused`: Pause at deterministic timestamp (00:03.500)
+  7. `cp-07-assist-open`: Mount ViewEase Assist overlay
+  8. `cp-08-assist-explain`: Inspect contextual scene explanation
+  9. `cp-09-assist-close`: Dismiss Assist overlay back to video player
+  10. `cp-10-playback-preserved`: Verify playback position & paused state immutability
+  11. `cp-11-focus-restored`: Verify spatial focus restores to expected action node
+  12. `cp-12-return-home`: Return from player to originating Home hierarchy
+- **Visual Comparison Engine**:
+  - **Side-by-Side Mode**: Side-by-side rendering with screenshot dimensions and SHA-256 integrity hashes.
+  - **Interactive Split Slider**: Draggable / Remote DPAD (Left/Right) comparison slider with live split reveal.
+  - **Visual Difference Heatmap**: Highlights layout shifts and font rasterization variance with color thermal mapping.
+  - **Behavioral Equivalence Audit**: Independent semantic state comparison table (screen IDs, focused element IDs, player state, overlay visibility).
+- **Mathematical Similarity Formula**:
+  $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} \frac{(R_{1i}-R_{2i})^2 + (G_{1i}-G_{2i})^2 + (B_{1i}-B_{2i})^2}{3}}$$
+  $$\text{Similarity \%} = \left(1 - \frac{\text{Pixel Mismatches}}{\text{Total Pixels}}\right) \times 100\%$$
+  *(GPU antialiasing and subpixel dithering below $\Delta E < 18$ are tolerated to expose genuine layout deltas).*
+- **Local Evidence Collection Tooling**:
+  ```bash
+  # Execute the canonical collector across host ADB devices and Vega Kepler:
+  npm run parity:collect
+  ```
+- **Honest Runtime Integration & Empty State**: If no bundle is imported, Parity Lab clearly shows the unverified state with instructions to run the collector rather than fabricating success.
 
 ### 5. Persistence: Continue Watching & My List
 - Seamless local storage via `StorageService` using `@react-native-async-storage/async-storage`.
@@ -100,7 +125,7 @@ Amazon_Fire_TV/
 │       ├── src/
 │       │   ├── components/      # Cinematic cards, player overlay, assist drawer
 │       │   ├── data/            # Rich offline catalog & timestamped transcripts
-│       │   ├── screens/         # Home, Explore, Details, Player, My List, Settings, FocusLab
+│       │   ├── screens/         # Home, Explore, Details, Player, My List, Settings, ParityLab
 │       │   ├── services/        # Local storage & ViewEase Assist Provider interface
 │       │   ├── theme/           # Warm Amber & Charcoal cinematic design tokens
 │       │   └── tvbridge/        # Cross-platform TVBridge abstraction layer

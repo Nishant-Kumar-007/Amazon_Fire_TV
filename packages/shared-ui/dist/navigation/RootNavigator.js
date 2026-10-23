@@ -8,7 +8,7 @@ const native_stack_1 = require("@react-navigation/native-stack");
 const DrawerNavigator_1 = __importDefault(require("./DrawerNavigator"));
 const DetailsScreen_1 = __importDefault(require("../screens/DetailsScreen"));
 const PlayerScreen_1 = __importDefault(require("../screens/PlayerScreen"));
-const FocusLabScreen_1 = __importDefault(require("../screens/FocusLabScreen"));
+const ParityLabScreen_1 = __importDefault(require("../screens/ParityLabScreen"));
 const Stack = (0, native_stack_1.createNativeStackNavigator)();
 function RootNavigator() {
     return (<Stack.Navigator screenOptions={{
@@ -17,6 +17,6 @@ function RootNavigator() {
       <Stack.Screen name="DrawerNavigator" component={DrawerNavigator_1.default}/>
       <Stack.Screen name="Details" component={DetailsScreen_1.default}/>
       <Stack.Screen name="Player" component={PlayerScreen_1.default}/>
-      <Stack.Screen name="FocusLab" component={FocusLabScreen_1.default}/>
+      <Stack.Screen name="ParityLab" component={ParityLabScreen_1.default}/>
     </Stack.Navigator>);
 }

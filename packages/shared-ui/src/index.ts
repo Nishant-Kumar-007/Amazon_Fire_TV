@@ -25,7 +25,13 @@ export { default as PlayerScreen } from './screens/PlayerScreen';
 export { default as ExploreScreen } from './screens/ExploreScreen';
 export { default as TVScreen } from './screens/TVScreen';
 export { default as SettingsScreen } from './screens/SettingsScreen';
-export { default as FocusLabScreen } from './screens/FocusLabScreen';
+export { default as ParityLabScreen } from './screens/ParityLabScreen';
+
+// Parity Lab Engine & Evidence
+export * from './parity/types';
+export * from './parity/comparisonEngine';
+export * from './parity/canonicalScenario';
+export * from './parity/evidenceLoader';
 
 // Data & Services
 export * from './data/viewEaseCatalog';

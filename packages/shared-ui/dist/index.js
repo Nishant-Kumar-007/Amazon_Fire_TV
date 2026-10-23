@@ -18,7 +18,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.FocusLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.TopNavigationBar = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
+exports.RemoteControlManager = exports.scaledPixels = exports.DrawerNavigator = exports.RootNavigator = exports.getCloseDrawerDirection = exports.getOpenDrawerDirection = exports.isRTL = exports.VideoHandler = exports.StorageService = exports.ParityLabScreen = exports.SettingsScreen = exports.TVScreen = exports.ExploreScreen = exports.PlayerScreen = exports.DetailsScreen = exports.HomeScreen = exports.TopNavigationBar = exports.SeekBar = exports.VideoPlayer = exports.VideoOverlay = exports.ViewEaseAssistOverlay = exports.CustomDrawerContent = exports.useMenuContext = exports.MenuProvider = exports.LoadingIndicator = exports.FocusablePressable = exports.AppNavigator = void 0;
 // Main App Navigator
 var AppNavigator_1 = require("./navigation/AppNavigator");
 Object.defineProperty(exports, "AppNavigator", { enumerable: true, get: function () { return __importDefault(AppNavigator_1).default; } });
@@ -57,8 +57,13 @@ var TVScreen_1 = require("./screens/TVScreen");
 Object.defineProperty(exports, "TVScreen", { enumerable: true, get: function () { return __importDefault(TVScreen_1).default; } });
 var SettingsScreen_1 = require("./screens/SettingsScreen");
 Object.defineProperty(exports, "SettingsScreen", { enumerable: true, get: function () { return __importDefault(SettingsScreen_1).default; } });
-var FocusLabScreen_1 = require("./screens/FocusLabScreen");
-Object.defineProperty(exports, "FocusLabScreen", { enumerable: true, get: function () { return __importDefault(FocusLabScreen_1).default; } });
+var ParityLabScreen_1 = require("./screens/ParityLabScreen");
+Object.defineProperty(exports, "ParityLabScreen", { enumerable: true, get: function () { return __importDefault(ParityLabScreen_1).default; } });
+// Parity Lab Engine & Evidence
+__exportStar(require("./parity/types"), exports);
+__exportStar(require("./parity/comparisonEngine"), exports);
+__exportStar(require("./parity/canonicalScenario"), exports);
+__exportStar(require("./parity/evidenceLoader"), exports);
 // Data & Services
 __exportStar(require("./data/viewEaseCatalog"), exports);
 __exportStar(require("./data/moviesData"), exports);

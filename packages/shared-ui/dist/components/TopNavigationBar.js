@@ -137,15 +137,15 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
 
       {/* Right: Quick Tools & Account */}
       <react_native_1.View style={styles.rightActionsSection}>
-        {/* FocusLab Diagnostics Quick Link */}
-        <react_native_1.Pressable accessibilityRole="button" onPress={() => navigation.navigate('FocusLab')} 
+        {/* Parity Lab Diagnostics Quick Link */}
+        <react_native_1.Pressable accessibilityRole="button" onPress={() => navigation.navigate('ParityLab')} 
     // @ts-ignore
-    onMouseEnter={() => setHoveredTab('FocusLab')} onMouseLeave={() => setHoveredTab(null)} style={({ hovered }) => [
-            styles.focusLabBtn,
-            hovered && styles.focusLabBtnHovered,
+    onMouseEnter={() => setHoveredTab('ParityLab')} onMouseLeave={() => setHoveredTab(null)} style={({ hovered }) => [
+            styles.parityLabBtn,
+            hovered && styles.parityLabBtnHovered,
         ]}>
-          <react_native_1.Text style={styles.focusLabIcon}>⚡</react_native_1.Text>
-          <react_native_1.Text style={styles.focusLabText}>FocusLab™</react_native_1.Text>
+          <react_native_1.Text style={styles.parityLabIcon}>⚖</react_native_1.Text>
+          <react_native_1.Text style={styles.parityLabText}>Parity Lab</react_native_1.Text>
         </react_native_1.Pressable>
 
 
@@ -186,15 +186,15 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
             <react_native_1.View style={styles.moreMenuItems}>
               <react_native_1.Pressable onPress={() => {
             setMoreMenuVisible(false);
-            navigation.navigate('FocusLab');
+            navigation.navigate('ParityLab');
         }} style={({ hovered }) => [
             styles.moreMenuItem,
             hovered && styles.moreMenuItemHovered,
         ]}>
-                <react_native_1.Text style={styles.moreItemIcon}>⚡</react_native_1.Text>
+                <react_native_1.Text style={styles.moreItemIcon}>⚖</react_native_1.Text>
                 <react_native_1.View>
-                  <react_native_1.Text style={styles.moreItemTitle}>FocusLab™ Diagnostics</react_native_1.Text>
-                  <react_native_1.Text style={styles.moreItemSub}>Test remote D-pad, Fire OS & Vega OS runtime</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemTitle}>ViewEase Parity Lab</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>Actual cross-platform visual & behavioral evidence</react_native_1.Text>
                 </react_native_1.View>
               </react_native_1.Pressable>
 
@@ -322,12 +322,12 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
 
                 <react_native_1.Pressable onPress={() => {
             setAccountModalVisible(false);
-            navigation.navigate('FocusLab');
+            navigation.navigate('ParityLab');
         }} style={({ hovered }) => [
             styles.quickLinkBtn,
             hovered && styles.quickLinkBtnHovered,
         ]}>
-                  <react_native_1.Text style={styles.quickLinkText}>⚡ FocusLab™ Diagnostics</react_native_1.Text>
+                  <react_native_1.Text style={styles.quickLinkText}>⚖ ViewEase Parity Lab</react_native_1.Text>
                 </react_native_1.Pressable>
               </react_native_1.View>
             </react_native_1.View>
@@ -476,7 +476,7 @@ const styles = react_native_1.StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    focusLabBtn: {
+    parityLabBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(229, 169, 60, 0.15)',
@@ -489,18 +489,18 @@ const styles = react_native_1.StyleSheet.create({
         // @ts-ignore
         cursor: 'pointer',
     },
-    focusLabBtnHovered: {
+    parityLabBtnHovered: {
         backgroundColor: 'rgba(229, 169, 60, 0.3)',
         borderColor: theme_1.colors.primary,
         // @ts-ignore
         boxShadow: '0 0 12px rgba(229, 169, 60, 0.4)',
     },
-    focusLabIcon: {
+    parityLabIcon: {
         fontSize: 13,
         color: theme_1.colors.primary,
         marginRight: 5,
     },
-    focusLabText: {
+    parityLabText: {
         fontSize: 12,
         fontWeight: '700',
         color: theme_1.colors.primary,
