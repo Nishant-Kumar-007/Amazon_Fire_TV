@@ -576,6 +576,114 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     hasAssist: true,
     transcript: [],
   },
+  {
+    id: 'singularity-bay',
+    title: 'Singularity Bay',
+    tagline: 'Where the digital tide washes away all secrets.',
+    description:
+      'A hard-boiled cyberpunk web series set in an offshore data haven where rogue hacktivists and neural operatives wage an invisible war for control of the global synthetic currency reserves.',
+    headerImage:
+      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80',
+    posterImage:
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
+    movie:
+      'https://media.w3.org/2010/05/sintel/trailer.mp4',
+    category: 'Web Series',
+    genres: ['Web Series', 'Cyberpunk', 'Thriller', 'Action'],
+    releaseYear: 2026,
+    rating: 4.8,
+    ratingCount: 4120,
+    contentRating: 'TV-MA',
+    duration: 840,
+    badges: ['Season 1', '6 Episodes', '4K Ultra HD', 'Dolby Atmos'],
+    director: 'Anya Varma',
+    cast: ['Marcus Cole', 'Elena Thorne', 'Jin Woo'],
+    audioTracks: ['English [Original]', 'Hindi (Stereo)'],
+    subtitleLanguages: ['English [CC]', 'Hindi', 'Japanese'],
+    hasAssist: true,
+    transcript: [],
+  },
+  {
+    id: 'chronicles-of-elysium',
+    title: 'Chronicles of Elysium',
+    tagline: 'Beyond the stars, an ancient sanctuary awakens.',
+    description:
+      'A sprawling 10-episode sci-fi saga chronicling humanity’s first expedition into the Andromeda spiral, where an abandoned Dyson sphere holds the collective memories of a million extinct civilizations.',
+    headerImage:
+      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80',
+    posterImage:
+      'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80',
+    movie:
+      'https://vjs.zencdn.net/v/oceans.mp4',
+    category: 'Web Series',
+    genres: ['Web Series', 'Sci-Fi', 'Adventure', 'Mystery'],
+    releaseYear: 2026,
+    rating: 4.9,
+    ratingCount: 5280,
+    contentRating: 'TV-14',
+    duration: 900,
+    badges: ['Season 1', '10 Episodes', 'IMAX Enhanced', 'HDR10+'],
+    director: 'Daniel Zhang',
+    cast: ['Commander Sarah Vance', 'Dr. Liam Thorne', 'Aria-9 (AI)'],
+    audioTracks: ['English [Original]', 'Hindi (Stereo)', 'Spanish (Stereo)'],
+    subtitleLanguages: ['English [CC]', 'Hindi', 'French', 'German'],
+    hasAssist: true,
+    transcript: [],
+  },
+  {
+    id: 'kitsune-spirit-forest',
+    title: 'Kitsune: Spirit Forest',
+    tagline: 'Ancient magic whispers to those who dare to listen.',
+    description:
+      'A visually stunning Japanese animated fantasy feature following Kaede, a young shrine keeper who crosses the celestial veil into the spirit realm to heal the great World Tree before the eclipse of seasons.',
+    headerImage:
+      'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1920&q=80',
+    posterImage:
+      'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
+    movie:
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4',
+    category: 'Cartoons & Animation',
+    genres: ['Animation', 'Fantasy', 'Adventure', 'Anime'],
+    releaseYear: 2026,
+    rating: 4.9,
+    ratingCount: 6310,
+    contentRating: 'TV-PG',
+    duration: 720,
+    badges: ['Anime Masterpiece', '4K Ultra HD', 'Dolby Vision', 'Family Choice'],
+    director: 'Hayao Matsui',
+    cast: ['Kaede (Voice)', 'Lord Ren (Voice)', 'Kitsune Spirit'],
+    audioTracks: ['Japanese [Original]', 'English (Stereo)', 'Hindi (Stereo)'],
+    subtitleLanguages: ['English [CC]', 'Hindi', 'Japanese', 'Spanish'],
+    hasAssist: true,
+    transcript: [],
+  },
+  {
+    id: 'serengeti-untamed',
+    title: 'Serengeti: Untamed Horizons',
+    tagline: 'The timeless rhythm of the greatest migration on Earth.',
+    description:
+      'Filmed over two migratory cycles in Kenya and Tanzania using high-speed 8K cameras, this majestic nature documentary follows predator and prey across the savannah in an extraordinary testament to life’s resilience.',
+    headerImage:
+      'https://images.unsplash.com/photo-1534177616072-ef7dc120449d?auto=format&fit=crop&w=1920&q=80',
+    posterImage:
+      'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80',
+    movie:
+      'https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_5MB.mp4',
+    category: 'Documentaries',
+    genres: ['Documentary', 'Nature', 'Wildlife'],
+    releaseYear: 2025,
+    rating: 4.8,
+    ratingCount: 2950,
+    contentRating: 'TV-G',
+    duration: 680,
+    badges: ['8K Ultra HD Source', 'Dolby Atmos', 'Nature Excellence'],
+    director: 'Malcolm Ndlovu',
+    cast: ['Narrated by Sir David Attenborough Tribute'],
+    audioTracks: ['English (Dolby 5.1)', 'Hindi (Stereo)'],
+    subtitleLanguages: ['English [CC]', 'Hindi', 'Spanish', 'German'],
+    hasAssist: true,
+    transcript: [],
+  },
 ];
 
 // Helper to look up title by ID or fallback to featured title

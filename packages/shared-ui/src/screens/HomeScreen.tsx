@@ -128,9 +128,10 @@ export default function HomeScreen() {
   // Catalog and user state
   const [allMovies, setAllMovies] = useState<ViewEaseTitle[]>(VIEWEASE_CATALOG);
   const [continueWatching, setContinueWatching] = useState<PlaybackProgress[]>([]);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('All');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('Home');
+  const mainScrollViewRef = useRef<ScrollView>(null);
 
-  // Hero carousel state (8 featured titles auto-advancing)
+  // Hero carousel state
   const [heroIndex, setHeroIndex] = useState(0);
   const [isHeroHovered, setIsHeroHovered] = useState(false);
   const [isAnyCardHovered, setIsAnyCardHovered] = useState(false);
@@ -140,14 +141,63 @@ export default function HomeScreen() {
   const [viewAllCategoryName, setViewAllCategoryName] = useState('');
   const [viewAllMovies, setViewAllMovies] = useState<ViewEaseTitle[]>([]);
 
-  // 8 featured titles for the split-screen hero showcase
+  // Dynamic Hero Titles based on the active tab
   const heroFeaturedTitles: ViewEaseTitle[] = useMemo(() => {
+    if (activeCategoryFilter === 'All' || activeCategoryFilter === 'Home') {
+      return allMovies.slice(0, 8);
+    }
+    if (activeCategoryFilter === 'Movies') {
+      const movies = allMovies.filter(
+        (m) =>
+          m.category === 'Movies' ||
+          m.category === 'ViewEase Originals' ||
+          m.category === 'Featured' ||
+          m.genres?.includes('Movies') ||
+          m.genres?.includes('Action') ||
+          m.genres?.includes('Thriller') ||
+          m.genres?.includes('Drama'),
+      );
+      return movies.length > 0 ? movies : allMovies.slice(0, 5);
+    }
+    if (activeCategoryFilter === 'Web Series') {
+      const series = allMovies.filter(
+        (m) => m.category === 'Web Series' || m.genres?.includes('Web Series'),
+      );
+      return series.length > 0 ? series : allMovies.slice(0, 4);
+    }
+    if (activeCategoryFilter === 'Cartoons & Animation' || activeCategoryFilter === 'Cartoons') {
+      const cartoons = allMovies.filter(
+        (m) =>
+          m.category === 'Cartoons & Animation' ||
+          m.category.includes('Cartoon') ||
+          m.genres?.includes('Animation') ||
+          m.genres?.includes('Anime'),
+      );
+      return cartoons.length > 0 ? cartoons : allMovies.slice(0, 4);
+    }
+    if (activeCategoryFilter === 'Documentaries') {
+      const docs = allMovies.filter(
+        (m) =>
+          m.category === 'Documentaries' ||
+          m.genres?.includes('Documentary') ||
+          m.genres?.includes('Nature') ||
+          m.genres?.includes('Science') ||
+          m.genres?.includes('Space'),
+      );
+      return docs.length > 0 ? docs : allMovies.slice(0, 4);
+    }
     return allMovies.slice(0, 8);
-  }, [allMovies]);
+  }, [allMovies, activeCategoryFilter]);
 
   const activeHeroTitle: ViewEaseTitle = useMemo(() => {
     return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || VIEWEASE_CATALOG[0];
   }, [heroFeaturedTitles, heroIndex]);
+
+  // Reset carousel index and scroll to top immediately when user switches tabs
+  useEffect(() => {
+    setHeroIndex(0);
+    mainScrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  }, [activeCategoryFilter]);
 
   // Auto-advance hero showcase every 5 seconds (unless hovered/interacting with hero or any card)
   useEffect(() => {
@@ -204,18 +254,73 @@ export default function HomeScreen() {
     [navigation],
   );
 
-  // Category filters
-  const trendingWebSeries = useMemo(
+  // Subcategory filters for Movies section
+  const moviesTrending = useMemo(
+    () =>
+      allMovies.filter(
+        (m) =>
+          m.category === 'Movies' ||
+          m.category === 'Featured' ||
+          m.category === 'ViewEase Originals' ||
+          m.genres?.includes('Movies'),
+      ),
+    [allMovies],
+  );
+  const moviesSciFiAction = useMemo(
+    () =>
+      moviesTrending.filter(
+        (m) =>
+          m.genres?.includes('Sci-Fi') ||
+          m.genres?.includes('Action') ||
+          m.genres?.includes('Thriller'),
+      ),
+    [moviesTrending],
+  );
+  const moviesTopRated = useMemo(
+    () => moviesTrending.filter((m) => (m.rating || 0) >= 4.8),
+    [moviesTrending],
+  );
+  const moviesOriginals = useMemo(
+    () =>
+      moviesTrending.filter(
+        (m) =>
+          m.category === 'ViewEase Originals' ||
+          m.badges?.some((b) => b.includes('Original') || b.includes('ViewEase')),
+      ),
+    [moviesTrending],
+  );
+
+  // Subcategory filters for Web Series section
+  const seriesTrending = useMemo(
     () => allMovies.filter((m) => m.category === 'Web Series' || m.genres?.includes('Web Series')),
     [allMovies],
   );
-
-  const blockbusterMovies = useMemo(
-    () => allMovies.filter((m) => m.category === 'Movies' || m.genres?.includes('Movies')),
-    [allMovies],
+  const seriesCyberpunk = useMemo(
+    () =>
+      seriesTrending.filter(
+        (m) =>
+          m.genres?.includes('Cyberpunk') ||
+          m.genres?.includes('Thriller') ||
+          m.genres?.includes('Crime') ||
+          m.title.includes('Shadows') ||
+          m.title.includes('Singularity'),
+      ),
+    [seriesTrending],
+  );
+  const seriesSciFi = useMemo(
+    () =>
+      seriesTrending.filter(
+        (m) =>
+          m.genres?.includes('Sci-Fi') ||
+          m.genres?.includes('Adventure') ||
+          m.title.includes('Starlight') ||
+          m.title.includes('Chronicles'),
+      ),
+    [seriesTrending],
   );
 
-  const cartoonsAndAnime = useMemo(
+  // Subcategory filters for Cartoons section
+  const cartoonsTrending = useMemo(
     () =>
       allMovies.filter(
         (m) =>
@@ -225,19 +330,31 @@ export default function HomeScreen() {
       ),
     [allMovies],
   );
-
-  const sciFiAndCyberpunk = useMemo(
+  const cartoonsAnime = useMemo(
     () =>
-      allMovies.filter(
+      cartoonsTrending.filter(
         (m) =>
-          m.genres?.includes('Sci-Fi') ||
-          m.genres?.includes('Cyberpunk') ||
-          m.category === 'ViewEase Originals',
+          m.genres?.includes('Anime') ||
+          m.genres?.includes('Fantasy') ||
+          m.title.includes('Aetheria') ||
+          m.title.includes('Kitsune'),
       ),
-    [allMovies],
+    [cartoonsTrending],
+  );
+  const cartoonsFamily = useMemo(
+    () =>
+      cartoonsTrending.filter(
+        (m) =>
+          m.genres?.includes('Family') ||
+          m.genres?.includes('Comedy') ||
+          m.contentRating === 'TV-G' ||
+          m.contentRating === 'TV-Y7',
+      ),
+    [cartoonsTrending],
   );
 
-  const documentaries = useMemo(
+  // Subcategory filters for Documentaries section
+  const docsTrending = useMemo(
     () =>
       allMovies.filter(
         (m) =>
@@ -247,6 +364,38 @@ export default function HomeScreen() {
           m.genres?.includes('Science'),
       ),
     [allMovies],
+  );
+  const docsSpace = useMemo(
+    () =>
+      docsTrending.filter(
+        (m) =>
+          m.genres?.includes('Space') ||
+          m.genres?.includes('Cosmic') ||
+          m.title.includes('Cosmic') ||
+          m.title.includes('Horizon'),
+      ),
+    [docsTrending],
+  );
+  const docsOceans = useMemo(
+    () =>
+      docsTrending.filter(
+        (m) =>
+          m.genres?.includes('Science') ||
+          m.title.includes('Deep') ||
+          m.title.includes('Voices'),
+      ),
+    [docsTrending],
+  );
+  const docsPolarWildlife = useMemo(
+    () =>
+      docsTrending.filter(
+        (m) =>
+          m.genres?.includes('Nature') ||
+          m.genres?.includes('Wildlife') ||
+          m.title.includes('Aurora') ||
+          m.title.includes('Serengeti'),
+      ),
+    [docsTrending],
   );
 
   // Open "View All" modal for a category
@@ -282,6 +431,7 @@ export default function HomeScreen() {
       />
 
       <ScrollView
+        ref={mainScrollViewRef}
         style={styles.mainScrollView}
         contentContainerStyle={styles.mainScrollContent}
         showsVerticalScrollIndicator={false}
@@ -461,121 +611,388 @@ export default function HomeScreen() {
 
         {/* 3. Horizontal Content Rows with "View All →" and Scrolling Arrows */}
         <View style={styles.rowsWrapper}>
-          {/* Continue Watching (Only shown if active progress exists) */}
-          {continueWatching.length > 0 && (
-            <CategoryRow
-              rowKey="continue"
-              title="Continue Watching"
-              subtitle="Pick up exactly where you left off"
-              movies={continueWatching.map((p) => {
-                const found = allMovies.find((m) => String(m.id) === p.id);
-                return found || allMovies[0];
-              })}
-              progressMap={continueWatching}
-              onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() =>
-                openViewAll(
-                  'Continue Watching',
-                  continueWatching.map((p) => allMovies.find((m) => String(m.id) === p.id) || allMovies[0]),
-                )
-              }
-              rowRef={(el) => {
-                rowRefs.current['continue'] = el;
-              }}
-              onScrollLeft={() => scrollRow('continue', 'left')}
-              onScrollRight={() => scrollRow('continue', 'right')}
-            />
+          {/* SECTION 1: HOME (ALL) */}
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Home') && (
+            <>
+              {continueWatching.length > 0 && (
+                <CategoryRow
+                  rowKey="continue"
+                  title="Continue Watching"
+                  subtitle="Pick up exactly where you left off"
+                  movies={continueWatching.map((p) => {
+                    const found = allMovies.find((m) => String(m.id) === p.id);
+                    return found || allMovies[0];
+                  })}
+                  progressMap={continueWatching}
+                  onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)}
+                  onCardHover={setIsAnyCardHovered}
+                  onViewAll={() =>
+                    openViewAll(
+                      'Continue Watching',
+                      continueWatching.map((p) => allMovies.find((m) => String(m.id) === p.id) || allMovies[0]),
+                    )
+                  }
+                  rowRef={(el) => {
+                    rowRefs.current['continue'] = el;
+                  }}
+                  onScrollLeft={() => scrollRow('continue', 'left')}
+                  onScrollRight={() => scrollRow('continue', 'right')}
+                />
+              )}
+
+              <CategoryRow
+                rowKey="web-series-home"
+                title="Trending Web Series"
+                subtitle="Bingeworthy multi-episode sagas"
+                movies={seriesTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Trending Web Series', seriesTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['web-series-home'] = el;
+                }}
+                onScrollLeft={() => scrollRow('web-series-home', 'left')}
+                onScrollRight={() => scrollRow('web-series-home', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="movies-home"
+                title="Blockbuster Movies"
+                subtitle="Feature films in 4K HDR & Dolby Atmos"
+                movies={moviesTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Blockbuster Movies', moviesTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['movies-home'] = el;
+                }}
+                onScrollLeft={() => scrollRow('movies-home', 'left')}
+                onScrollRight={() => scrollRow('movies-home', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="cartoons-home"
+                title="Cartoons & Animation"
+                subtitle="Anime epics & family friendly adventures"
+                movies={cartoonsTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Cartoons & Animation', cartoonsTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['cartoons-home'] = el;
+                }}
+                onScrollLeft={() => scrollRow('cartoons-home', 'left')}
+                onScrollRight={() => scrollRow('cartoons-home', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="docs-home"
+                title="Nature & Space Documentaries"
+                subtitle="Real scientific discoveries and cosmic horizons"
+                movies={docsTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Nature & Space Documentaries', docsTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['docs-home'] = el;
+                }}
+                onScrollLeft={() => scrollRow('docs-home', 'left')}
+                onScrollRight={() => scrollRow('docs-home', 'right')}
+              />
+            </>
           )}
 
-          {/* Trending Web Series */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Web Series') && (
-            <CategoryRow
-              rowKey="web-series"
-              title="Trending Web Series"
-              subtitle="Bingeworthy multi-episode sagas"
-              movies={trendingWebSeries}
-              onCardPress={navigateToDetails}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() => openViewAll('Trending Web Series', trendingWebSeries)}
-              rowRef={(el) => {
-                rowRefs.current['web-series'] = el;
-              }}
-              onScrollLeft={() => scrollRow('web-series', 'left')}
-              onScrollRight={() => scrollRow('web-series', 'right')}
-            />
+          {/* SECTION 2: MOVIES */}
+          {activeCategoryFilter === 'Movies' && (
+            <>
+              <View style={styles.sectionHeaderBanner}>
+                <View>
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>CINEMA SPOTLIGHT</Text>
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>Feature Films & Blockbusters</Text>
+                  <Text style={styles.sectionHeaderSub}>
+                    Theatrical releases in 4K Ultra HD, HDR10+, and Dolby Atmos
+                  </Text>
+                </View>
+              </View>
+
+              <CategoryRow
+                rowKey="movies-trending"
+                title="Trending Blockbusters"
+                subtitle="Most popular theatrical releases this week"
+                movies={moviesTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Trending Blockbusters', moviesTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['movies-trending'] = el;
+                }}
+                onScrollLeft={() => scrollRow('movies-trending', 'left')}
+                onScrollRight={() => scrollRow('movies-trending', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="movies-scifi"
+                title="Sci-Fi & Action Thrillers"
+                subtitle="High-octane physics, quantum anomalies, and future tech"
+                movies={moviesSciFiAction}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Sci-Fi & Action Thrillers', moviesSciFiAction)}
+                rowRef={(el) => {
+                  rowRefs.current['movies-scifi'] = el;
+                }}
+                onScrollLeft={() => scrollRow('movies-scifi', 'left')}
+                onScrollRight={() => scrollRow('movies-scifi', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="movies-toprated"
+                title="Critically Acclaimed Cinema"
+                subtitle="Films rated 4.8★ and higher by critics & audiences"
+                movies={moviesTopRated}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Critically Acclaimed Cinema', moviesTopRated)}
+                rowRef={(el) => {
+                  rowRefs.current['movies-toprated'] = el;
+                }}
+                onScrollLeft={() => scrollRow('movies-toprated', 'left')}
+                onScrollRight={() => scrollRow('movies-toprated', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="movies-originals"
+                title="ViewEase Original Features"
+                subtitle="Exclusive productions crafted for next-gen display immersion"
+                movies={moviesOriginals}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('ViewEase Original Features', moviesOriginals)}
+                rowRef={(el) => {
+                  rowRefs.current['movies-originals'] = el;
+                }}
+                onScrollLeft={() => scrollRow('movies-originals', 'left')}
+                onScrollRight={() => scrollRow('movies-originals', 'right')}
+              />
+            </>
           )}
 
-          {/* Blockbuster Movies */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Movies') && (
-            <CategoryRow
-              rowKey="movies"
-              title="Blockbuster Movies"
-              subtitle="Feature films in 4K HDR & Dolby Atmos"
-              movies={blockbusterMovies}
-              onCardPress={navigateToDetails}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() => openViewAll('Blockbuster Movies', blockbusterMovies)}
-              rowRef={(el) => {
-                rowRefs.current['movies'] = el;
-              }}
-              onScrollLeft={() => scrollRow('movies', 'left')}
-              onScrollRight={() => scrollRow('movies', 'right')}
-            />
+          {/* SECTION 3: WEB SERIES */}
+          {activeCategoryFilter === 'Web Series' && (
+            <>
+              <View style={styles.sectionHeaderBanner}>
+                <View>
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>MULTI-EPISODE SAGAS</Text>
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>Premium Web Series & Seasons</Text>
+                  <Text style={styles.sectionHeaderSub}>
+                    Binge-worthy serialized narratives with deep lore and evolving character arcs
+                  </Text>
+                </View>
+              </View>
+
+              <CategoryRow
+                rowKey="series-trending"
+                title="Trending Web Series"
+                subtitle="The most-watched series streaming right now"
+                movies={seriesTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Trending Web Series', seriesTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['series-trending'] = el;
+                }}
+                onScrollLeft={() => scrollRow('series-trending', 'left')}
+                onScrollRight={() => scrollRow('series-trending', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="series-cyberpunk"
+                title="Cyberpunk & Tech Noir"
+                subtitle="Neon underworlds, cyber-detectives, and neural conspiracies"
+                movies={seriesCyberpunk}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Cyberpunk & Tech Noir', seriesCyberpunk)}
+                rowRef={(el) => {
+                  rowRefs.current['series-cyberpunk'] = el;
+                }}
+                onScrollLeft={() => scrollRow('series-cyberpunk', 'left')}
+                onScrollRight={() => scrollRow('series-cyberpunk', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="series-scifi"
+                title="Interstellar & Space Expeditions"
+                subtitle="Colony ships, cosmic entities, and unknown horizons"
+                movies={seriesSciFi}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Interstellar & Space Expeditions', seriesSciFi)}
+                rowRef={(el) => {
+                  rowRefs.current['series-scifi'] = el;
+                }}
+                onScrollLeft={() => scrollRow('series-scifi', 'left')}
+                onScrollRight={() => scrollRow('series-scifi', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="series-all"
+                title="Complete Series Collection"
+                subtitle="All episodes and seasons available on ViewEase TV"
+                movies={seriesTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Complete Series Collection', seriesTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['series-all'] = el;
+                }}
+                onScrollLeft={() => scrollRow('series-all', 'left')}
+                onScrollRight={() => scrollRow('series-all', 'right')}
+              />
+            </>
           )}
 
-          {/* Cartoons & Animation */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Cartoons & Animation') && (
-            <CategoryRow
-              rowKey="cartoons"
-              title="Cartoons & Animation"
-              subtitle="Anime epics & family friendly adventures"
-              movies={cartoonsAndAnime}
-              onCardPress={navigateToDetails}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() => openViewAll('Cartoons & Animation', cartoonsAndAnime)}
-              rowRef={(el) => {
-                rowRefs.current['cartoons'] = el;
-              }}
-              onScrollLeft={() => scrollRow('cartoons', 'left')}
-              onScrollRight={() => scrollRow('cartoons', 'right')}
-            />
+          {/* SECTION 4: CARTOONS & ANIMATION */}
+          {(activeCategoryFilter === 'Cartoons & Animation' || activeCategoryFilter === 'Cartoons') && (
+            <>
+              <View style={styles.sectionHeaderBanner}>
+                <View>
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>ANIMATION VAULT</Text>
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>Cartoons, Anime & Family Adventures</Text>
+                  <Text style={styles.sectionHeaderSub}>
+                    Vibrant worlds, mythical journeys, and wholesome laughter for every generation
+                  </Text>
+                </View>
+              </View>
+
+              <CategoryRow
+                rowKey="cartoons-anime"
+                title="Anime Epics & Mythical Worlds"
+                subtitle="Breathtaking art styles and legends of flight and magic"
+                movies={cartoonsAnime}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Anime Epics & Mythical Worlds', cartoonsAnime)}
+                rowRef={(el) => {
+                  rowRefs.current['cartoons-anime'] = el;
+                }}
+                onScrollLeft={() => scrollRow('cartoons-anime', 'left')}
+                onScrollRight={() => scrollRow('cartoons-anime', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="cartoons-family"
+                title="Kids Choice & Family Comedy"
+                subtitle="Heartwarming laughs and energetic animated companions"
+                movies={cartoonsFamily}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Kids Choice & Family Comedy', cartoonsFamily)}
+                rowRef={(el) => {
+                  rowRefs.current['cartoons-family'] = el;
+                }}
+                onScrollLeft={() => scrollRow('cartoons-family', 'left')}
+                onScrollRight={() => scrollRow('cartoons-family', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="cartoons-all"
+                title="All Animated Adventures"
+                subtitle="The complete ViewEase animated catalog"
+                movies={cartoonsTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('All Animated Adventures', cartoonsTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['cartoons-all'] = el;
+                }}
+                onScrollLeft={() => scrollRow('cartoons-all', 'left')}
+                onScrollRight={() => scrollRow('cartoons-all', 'right')}
+              />
+            </>
           )}
 
-          {/* Sci-Fi & Cyberpunk */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Sci-Fi') && (
-            <CategoryRow
-              rowKey="scifi"
-              title="Sci-Fi & Cyberpunk"
-              subtitle="Interstellar mysteries and synthetic realities"
-              movies={sciFiAndCyberpunk}
-              onCardPress={navigateToDetails}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() => openViewAll('Sci-Fi & Cyberpunk', sciFiAndCyberpunk)}
-              rowRef={(el) => {
-                rowRefs.current['scifi'] = el;
-              }}
-              onScrollLeft={() => scrollRow('scifi', 'left')}
-              onScrollRight={() => scrollRow('scifi', 'right')}
-            />
-          )}
+          {/* SECTION 5: DOCUMENTARIES */}
+          {activeCategoryFilter === 'Documentaries' && (
+            <>
+              <View style={styles.sectionHeaderBanner}>
+                <View>
+                  <View style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>REAL WORLD DISCOVERY</Text>
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>Earth, Oceans & Cosmos Documentaries</Text>
+                  <Text style={styles.sectionHeaderSub}>
+                    Witness unexplored ecosystems, deep sea acoustics, and galactic birth
+                  </Text>
+                </View>
+              </View>
 
-          {/* Documentaries */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Documentaries') && (
-            <CategoryRow
-              rowKey="docs"
-              title="Nature & Space Documentaries"
-              subtitle="Real scientific discoveries and cosmic horizons"
-              movies={documentaries}
-              onCardPress={navigateToDetails}
-              onCardHover={setIsAnyCardHovered}
-              onViewAll={() => openViewAll('Nature & Space Documentaries', documentaries)}
-              rowRef={(el) => {
-                rowRefs.current['docs'] = el;
-              }}
-              onScrollLeft={() => scrollRow('docs', 'left')}
-              onScrollRight={() => scrollRow('docs', 'right')}
-            />
+              <CategoryRow
+                rowKey="docs-space"
+                title="Cosmic Horizons & Space Science"
+                subtitle="Spectacular astrophysics based on NASA and space telescope datasets"
+                movies={docsSpace}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Cosmic Horizons & Space Science', docsSpace)}
+                rowRef={(el) => {
+                  rowRefs.current['docs-space'] = el;
+                }}
+                onScrollLeft={() => scrollRow('docs-space', 'left')}
+                onScrollRight={() => scrollRow('docs-space', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="docs-oceans"
+                title="Ocean & Deep Trench Mysteries"
+                subtitle="Four miles below the surface: bioluminescence and uncharted life"
+                movies={docsOceans}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Ocean & Deep Trench Mysteries', docsOceans)}
+                rowRef={(el) => {
+                  rowRefs.current['docs-oceans'] = el;
+                }}
+                onScrollLeft={() => scrollRow('docs-oceans', 'left')}
+                onScrollRight={() => scrollRow('docs-oceans', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="docs-polar"
+                title="Polar Expeditions & Wildlife"
+                subtitle="Sub-zero arctic auroras and dramatic savannah migrations"
+                movies={docsPolarWildlife}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('Polar Expeditions & Wildlife', docsPolarWildlife)}
+                rowRef={(el) => {
+                  rowRefs.current['docs-polar'] = el;
+                }}
+                onScrollLeft={() => scrollRow('docs-polar', 'left')}
+                onScrollRight={() => scrollRow('docs-polar', 'right')}
+              />
+
+              <CategoryRow
+                rowKey="docs-all"
+                title="All Scientific & Nature Documentaries"
+                subtitle="Full non-fiction documentary library"
+                movies={docsTrending}
+                onCardPress={navigateToDetails}
+                onCardHover={setIsAnyCardHovered}
+                onViewAll={() => openViewAll('All Scientific & Nature Documentaries', docsTrending)}
+                rowRef={(el) => {
+                  rowRefs.current['docs-all'] = el;
+                }}
+                onScrollLeft={() => scrollRow('docs-all', 'left')}
+                onScrollRight={() => scrollRow('docs-all', 'right')}
+              />
+            </>
           )}
         </View>
       </ScrollView>
@@ -1088,7 +1505,39 @@ const styles = StyleSheet.create({
 
   // Category Rows Wrapper
   rowsWrapper: {
-    paddingTop: 16,
+    paddingTop: 8,
+  },
+  sectionHeaderBanner: {
+    paddingHorizontal: 48,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  sectionBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(229, 169, 60, 0.16)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  sectionBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 1,
+  },
+  sectionHeaderTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: 0.4,
+  },
+  sectionHeaderSub: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 4,
   },
   rowSection: {
     marginBottom: 32,

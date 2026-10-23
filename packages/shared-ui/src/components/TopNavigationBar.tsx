@@ -104,7 +104,9 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
       {/* Center: Navigation Links with Laptop Hover Feedback */}
       <View style={styles.centerNavSection}>
         {navItems.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive =
+            activeTab === item.id ||
+            (item.id === 'Home' && (activeTab === 'All' || activeTab === 'Home'));
           const isHovered = hoveredTab === item.id;
 
           return (
