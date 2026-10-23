@@ -1,32 +1,37 @@
 # ViewEase TV — Friction Log
 
 ## Task Attempted
-Verify consistent application behavior across Amazon Fire OS and Vega OS, particularly video playback, remote navigation, focus restoration, and contextual viewing overlays.
+Develop and validate a consistent TV viewing experience across Amazon Fire OS and Vega OS, focusing on video playback, D-pad navigation, focus restoration, and contextual viewing overlays.
 
 ## Steps Taken
 1. Extended Amazon's React Native Multi-TV sample into ViewEase TV.
-2. Created a Parity Lab interface for comparing platform behavior.
-3. Attempted to present screenshots, navigation events, and test results in a single developer-facing interface.
-4. Identified the need for independent platform captures and runtime evidence to substantiate cross-platform compatibility.
+2. Built a cross-platform comparison interface to inspect the application across both operating systems.
+3. Identified that static images and predefined test metrics could not establish genuine cross-platform compatibility.
+4. Redesigned the Comparison UI into an evidence-driven experience that supports synchronized recordings, visual differences, behavioral traces, and explicit evidence-status indicators.
 
 ## Expected vs. Actual Result
 
-**Expected:** A reproducible workflow that runs the same interaction sequence on Fire OS and Vega OS, captures actual application output, and compares navigation behavior and rendered screens.
+**Expected:** A reproducible workflow that executes the same interaction sequence on Fire OS and Vega OS, captures actual application output, and compares rendered screens and observed behavior.
 
-**Actual:** The initial Parity Lab prototype displayed static streaming imagery and predefined-looking metrics. Its remote-input log showed no recorded live events. Consequently, the displayed results did not establish that the application had been independently tested on both platforms.
+**Actual:** The initial comparison interface did not provide sufficient evidence to substantiate cross-platform compatibility. This UI limitation has since been addressed through the redesigned comparison experience. The remaining validation requirement is to obtain genuine captures and runtime evidence from independent Fire OS and Vega OS runs and compare their results.
 
 ## Severity
-**Important** — Without genuine runtime evidence, developers and reviewers cannot reliably distinguish verified compatibility from an illustrative comparison.
+**Important** — Reliable cross-platform validation is essential for distinguishing genuine compatibility from visual similarity or shared source code alone.
 
-## Workaround
-The proposed solution is ViewEase TwinRun: an evidence-driven comparison workflow using actual platform recordings, screenshot comparisons, runtime event traces, and a manifest containing available build and capture information.
+## Workaround Used
+Redesigned the comparison experience to make actual application recordings, captured screenshots, visual differences, runtime events, and missing evidence distinguishable.
 
-Until both platform runs have been captured and validated, cross-platform parity must remain unverified. Missing evidence should be explicitly labelled rather than reported as a successful test.
+The updated interface supports inspecting platform evidence rather than relying solely on summary scores. Cross-platform equivalence must only be reported when the required evidence has been collected and the relevant assertions have passed.
 
 ## Actionable Suggestion
-Provide a documented, unified workflow for replaying identical TV interactions across Fire OS and Vega OS. Support timestamped screenshots, screen recordings, focus transitions, playback-state events, build metadata, and reproducible comparison reports.
+Provide a documented, unified workflow for executing repeatable TV interaction scenarios across Fire OS and Vega OS. Support timestamped screen captures, recordings, focus transitions, playback-state events, build information, and reproducible comparison reports.
 
-This would help developers identify platform-specific issues faster, reduce repetitive manual testing, and substantiate compatibility claims with inspectable evidence.
+A standardized evidence export would reduce manual testing effort, simplify cross-platform debugging, and help developers substantiate compatibility claims with inspectable artifacts.
 
-## Current Validation Status
-The initial UI exposed a gap in the verification approach. Actual Fire OS and Vega OS captures, along with repeatable behavioral comparisons, are required before successful cross-platform equivalence can be claimed.
+## Current Status
+**Comparison UI: Updated.**
+
+The comparison interface has been redesigned to emphasize real evidence and transparent validation status. Actual cross-platform behavior remains subject to the results of independent platform runs; any missing captures or untested scenarios must remain explicitly identified.
+
+## Impact
+This improvement makes ViewEase's verification workflow more transparent and provides a foundation for identifying and investigating differences in rendering, playback, and remote-navigation behavior across supported Fire TV platforms.
