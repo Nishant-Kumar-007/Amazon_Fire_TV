@@ -14,11 +14,19 @@ export interface TVPlatformCapabilities {
     supportsNativeVideo: boolean;
     supportsSpatialNav: boolean;
     audioPassthrough: boolean;
+    supportsFocus: boolean;
+    hasHardwareAcceleration: boolean;
 }
 export declare function getTVPlatformCapabilities(): TVPlatformCapabilities;
 declare class FocusRestorationManagerClass {
+    private static instance;
     private lastFocusedMap;
     private focusHistory;
+    private focusStack;
+    static getInstance(): FocusRestorationManagerClass;
+    pushFocusNode(nodeId: string): void;
+    popFocusNode(): string | null;
+    peekFocusNode(): string | null;
     saveFocus(screenName: string, focusId: string): void;
     getSavedFocus(screenName: string): string | null;
     getFocusHistory(): {

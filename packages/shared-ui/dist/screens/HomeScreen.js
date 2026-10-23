@@ -199,8 +199,8 @@ function HomeScreen() {
     onMouseEnter={() => setIsHeroHovered(true)} onMouseLeave={() => setIsHeroHovered(false)}>
           {/* Background image & gradient overlay */}
           <react_native_1.Image source={{ uri: activeHeroTitle.headerImage }} style={styles.heroBackdropImage} resizeMode="cover"/>
-          <PlatformLinearGradient_1.default colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.8)', 'rgba(11,13,17,0.3)', 'rgba(11,13,17,0.9)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.heroGradientLeft}/>
-          <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11,13,17,0.85)', theme_1.colors.background]} start={{ x: 0, y: 0.6 }} end={{ x: 0, y: 1 }} style={styles.heroGradientBottom}/>
+          <PlatformLinearGradient_1.default colors={['rgba(11,13,17,0.7)', 'rgba(11,13,17,0.25)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.heroGradientLeft}/>
+          <PlatformLinearGradient_1.default colors={['transparent', 'rgba(11,13,17,0.6)', theme_1.colors.background]} start={{ x: 0, y: 0.7 }} end={{ x: 0, y: 1 }} style={styles.heroGradientBottom}/>
 
           {/* Split Screen Layout */}
           <react_native_1.View style={styles.heroSplitContent}>
@@ -290,25 +290,6 @@ function HomeScreen() {
         })}
                 </react_native_1.View>
               </react_native_1.View>
-            </react_native_1.View>
-
-            {/* Right Split Column: Cinematic Poster Card with Hover White Boundary */}
-            <react_native_1.View style={styles.heroRightCol}>
-              <react_native_1.Pressable accessibilityRole="button" onPress={() => navigateToPlayer(activeHeroTitle)} style={({ hovered }) => [
-            styles.heroPreviewCard,
-            hovered && styles.heroPreviewCardHovered,
-        ]}>
-                <react_native_1.Image source={{ uri: activeHeroTitle.posterImage || activeHeroTitle.headerImage }} style={styles.heroPreviewImage} resizeMode="cover"/>
-                <react_native_1.View style={styles.heroPreviewOverlay}>
-                  <react_native_1.View style={styles.heroPlayCircle}>
-                    <react_native_1.Text style={styles.heroPlayIcon}>▶</react_native_1.Text>
-                  </react_native_1.View>
-                  <react_native_1.Text style={styles.heroPreviewTitle} numberOfLines={1}>
-                    {activeHeroTitle.title}
-                  </react_native_1.Text>
-                  <react_native_1.Text style={styles.heroPreviewHint}>Click to Stream in 4K UHD</react_native_1.Text>
-                </react_native_1.View>
-              </react_native_1.Pressable>
             </react_native_1.View>
           </react_native_1.View>
 
@@ -475,14 +456,14 @@ const styles = react_native_1.StyleSheet.create({
         ...react_native_1.StyleSheet.absoluteFillObject,
         width: '100%',
         height: '100%',
-        opacity: 0.55,
+        opacity: 1.0,
     },
     heroGradientLeft: {
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
-        width: '70%',
+        width: '50%',
     },
     heroGradientBottom: {
         position: 'absolute',
@@ -494,16 +475,13 @@ const styles = react_native_1.StyleSheet.create({
     heroSplitContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 48,
         paddingVertical: 36,
         zIndex: 10,
-        flexWrap: 'wrap',
-        gap: 24,
     },
     heroLeftCol: {
-        flex: 1.3,
-        minWidth: 320,
+        maxWidth: 820,
+        width: '100%',
         justifyContent: 'center',
     },
     heroBadgeRow: {

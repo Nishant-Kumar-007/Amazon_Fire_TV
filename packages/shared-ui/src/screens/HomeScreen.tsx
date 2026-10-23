@@ -293,14 +293,14 @@ export default function HomeScreen() {
             resizeMode="cover"
           />
           <PlatformLinearGradient
-            colors={['rgba(11,13,17,0.95)', 'rgba(11,13,17,0.8)', 'rgba(11,13,17,0.3)', 'rgba(11,13,17,0.9)']}
+            colors={['rgba(11,13,17,0.7)', 'rgba(11,13,17,0.25)', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.heroGradientLeft}
           />
           <PlatformLinearGradient
-            colors={['transparent', 'rgba(11,13,17,0.85)', colors.background]}
-            start={{ x: 0, y: 0.6 }}
+            colors={['transparent', 'rgba(11,13,17,0.6)', colors.background]}
+            start={{ x: 0, y: 0.7 }}
             end={{ x: 0, y: 1 }}
             style={styles.heroGradientBottom}
           />
@@ -421,33 +421,6 @@ export default function HomeScreen() {
                   })}
                 </View>
               </View>
-            </View>
-
-            {/* Right Split Column: Cinematic Poster Card with Hover White Boundary */}
-            <View style={styles.heroRightCol}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => navigateToPlayer(activeHeroTitle)}
-                style={({ hovered }: any) => [
-                  styles.heroPreviewCard,
-                  hovered && styles.heroPreviewCardHovered,
-                ]}
-              >
-                <Image
-                  source={{ uri: activeHeroTitle.posterImage || activeHeroTitle.headerImage }}
-                  style={styles.heroPreviewImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.heroPreviewOverlay}>
-                  <View style={styles.heroPlayCircle}>
-                    <Text style={styles.heroPlayIcon}>▶</Text>
-                  </View>
-                  <Text style={styles.heroPreviewTitle} numberOfLines={1}>
-                    {activeHeroTitle.title}
-                  </Text>
-                  <Text style={styles.heroPreviewHint}>Click to Stream in 4K UHD</Text>
-                </View>
-              </Pressable>
             </View>
           </View>
 
@@ -776,14 +749,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
-    opacity: 0.55,
+    opacity: 1.0,
   },
   heroGradientLeft: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: '70%',
+    width: '50%',
   },
   heroGradientBottom: {
     position: 'absolute',
@@ -795,16 +768,13 @@ const styles = StyleSheet.create({
   heroSplitContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 48,
     paddingVertical: 36,
     zIndex: 10,
-    flexWrap: 'wrap',
-    gap: 24,
   },
   heroLeftCol: {
-    flex: 1.3,
-    minWidth: 320,
+    maxWidth: 820,
+    width: '100%',
     justifyContent: 'center',
   },
   heroBadgeRow: {

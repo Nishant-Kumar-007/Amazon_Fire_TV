@@ -37,30 +37,92 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const react_1 = __importStar(require("react"));
-const react_native_video_1 = __importDefault(require("react-native-video"));
 const react_native_1 = require("react-native");
-const VideoPlayer = react_1.default.memo(react_1.default.forwardRef(({ movie, headerImage, paused, controls, onBuffer, onProgress, onLoad, onEnd, }, ref) => {
-    const { width } = (0, react_native_1.useWindowDimensions)();
-    // Memoize source object to prevent unnecessary re-renders
-    const videoSource = (0, react_1.useMemo)(() => ({ uri: movie }), [movie]);
-    // Memoize poster object to prevent unnecessary re-renders
-    const posterConfig = (0, react_1.useMemo)(() => react_native_1.Platform.OS === "web"
-        ? headerImage || undefined
-        : headerImage
-            ? {
-                source: { uri: headerImage },
-                resizeMode: "cover",
+const react_native_video_1 = __importDefault(require("react-native-video"));
+const VideoPlayer = react_1.default.memo(react_1.default.forwardRef(({ movie, headerImage, paused, controls = false, playbackRate = 1.0, onBuffer, onProgress, onLoad, onEnd, onError, }, ref) => {
+    const { width, height } = (0, react_native_1.useWindowDimensions)();
+    const nativeVideoRef = (0, react_1.useRef)(null);
+    const webVideoRef = (0, react_1.useRef)(null);
+    // Expose imperative methods (seek, setPlaybackRate) to parent
+    (0, react_1.useImperativeHandle)(ref, () => ({
+        seek: (timeInSeconds) => {
+            if (react_native_1.Platform.OS === "web" && webVideoRef.current) {
+                webVideoRef.current.currentTime = timeInSeconds;
             }
-            : undefined, [headerImage]);
-    // Calculate video style based on current dimensions
-    const videoStyle = (0, react_1.useMemo)(() => [
-        videoPlayerStyles.video,
-        { height: width * (9 / 16) },
-    ], [width]);
-    return (<react_native_video_1.default ref={ref} source={videoSource} style={videoStyle} controls={controls} paused={paused} onBuffer={({ isBuffering }) => onBuffer(isBuffering)} onProgress={({ currentTime }) => onProgress(currentTime)} onLoad={({ duration }) => onLoad(duration)} onEnd={onEnd} poster={posterConfig} resizeMode="cover"/>);
+            else if (nativeVideoRef.current) {
+                nativeVideoRef.current.seek(timeInSeconds);
+            }
+        },
+        setPlaybackRate: (rate) => {
+            if (react_native_1.Platform.OS === "web" && webVideoRef.current) {
+                webVideoRef.current.playbackRate = rate;
+            }
+        },
+    }));
+    // Web-specific play / pause / playbackRate sync
+    (0, react_1.useEffect)(() => {
+        if (react_native_1.Platform.OS === "web" && webVideoRef.current) {
+            webVideoRef.current.playbackRate = playbackRate;
+            if (paused) {
+                webVideoRef.current.pause();
+            }
+            else {
+                const playPromise = webVideoRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch((err) => {
+                        // Autoplay policy or user gesture requirement
+                        console.warn("Video playback error or policy restriction:", err);
+                    });
+                }
+            }
+        }
+    }, [paused, playbackRate]);
+    // Web HTML5 Video Implementation
+    if (react_native_1.Platform.OS === "web") {
+        return (<react_native_1.View style={styles.webContainer}>
+            <video ref={webVideoRef} src={movie} poster={headerImage} playsInline crossOrigin="anonymous" style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                backgroundColor: "#000000",
+            }} onWaiting={() => onBuffer(true)} onPlaying={() => onBuffer(false)} onTimeUpdate={(e) => {
+                const target = e.target;
+                if (target) {
+                    onProgress(target.currentTime);
+                }
+            }} onLoadedMetadata={(e) => {
+                const target = e.target;
+                if (target && target.duration) {
+                    onLoad(target.duration);
+                    onBuffer(false);
+                }
+            }} onEnded={() => onEnd()} onError={(e) => {
+                console.warn("Web video loading error:", e);
+                if (onError)
+                    onError(e);
+            }}/>
+          </react_native_1.View>);
+    }
+    // Native React Native Video (ExoPlayer for Fire TV / Android TV)
+    const videoSource = (0, react_1.useMemo)(() => ({ uri: movie }), [movie]);
+    const posterConfig = (0, react_1.useMemo)(() => headerImage
+        ? {
+            source: { uri: headerImage },
+            resizeMode: "cover",
+        }
+        : undefined, [headerImage]);
+    const videoStyle = (0, react_1.useMemo)(() => [styles.nativeVideo, { height: width * (9 / 16) }], [width]);
+    return (<react_native_video_1.default ref={nativeVideoRef} source={videoSource} style={videoStyle} controls={controls} paused={paused} rate={playbackRate} onBuffer={({ isBuffering }) => onBuffer(isBuffering)} onProgress={({ currentTime }) => onProgress(currentTime)} onLoad={({ duration }) => onLoad(duration)} onEnd={onEnd} poster={posterConfig} resizeMode="cover"/>);
 }));
-const videoPlayerStyles = react_native_1.StyleSheet.create({
-    video: {
+const styles = react_native_1.StyleSheet.create({
+    webContainer: {
+        ...react_native_1.StyleSheet.absoluteFillObject,
+        backgroundColor: "#000000",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1,
+    },
+    nativeVideo: {
         width: "100%",
     },
 });

@@ -26,6 +26,7 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
   const navigation = useNavigation<any>();
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [accountModalVisible, setAccountModalVisible] = useState(false);
+  const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState('4K Ultra HD');
   const [selectedLanguage, setSelectedLanguage] = useState('English [Hindi Available]');
 
@@ -197,7 +198,115 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
             <Text style={styles.accountPlan}>VIP Pass</Text>
           </View>
         </Pressable>
+
+        {/* Dedicated Three Dots (⋮) Button with High-Contrast Hover Highlighting */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="More Options"
+          onPress={() => setMoreMenuVisible(true)}
+          style={({ hovered }: any) => [
+            styles.threeDotsBtn,
+            hovered && styles.threeDotsBtnHovered,
+          ]}
+        >
+          <Text style={styles.threeDotsIcon}>⋮</Text>
+        </Pressable>
       </View>
+
+      {/* Three Dots More Menu Modal */}
+      <Modal
+        visible={moreMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMoreMenuVisible(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setMoreMenuVisible(false)}
+        >
+          <Pressable style={styles.moreMenuCard} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>More Options & Quick Actions</Text>
+              <Pressable
+                onPress={() => setMoreMenuVisible(false)}
+                style={styles.closeMoreBtn}
+              >
+                <Text style={styles.closeModalText}>✕</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.moreMenuItems}>
+              <Pressable
+                onPress={() => {
+                  setMoreMenuVisible(false);
+                  navigation.navigate('FocusLab');
+                }}
+                style={({ hovered }: any) => [
+                  styles.moreMenuItem,
+                  hovered && styles.moreMenuItemHovered,
+                ]}
+              >
+                <Text style={styles.moreItemIcon}>⚡</Text>
+                <View>
+                  <Text style={styles.moreItemTitle}>FocusLab™ Diagnostics</Text>
+                  <Text style={styles.moreItemSub}>Test remote D-pad, Fire OS & Vega OS runtime</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setMoreMenuVisible(false);
+                  navigation.navigate('TV');
+                }}
+                style={({ hovered }: any) => [
+                  styles.moreMenuItem,
+                  hovered && styles.moreMenuItemHovered,
+                ]}
+              >
+                <Text style={styles.moreItemIcon}>🔖</Text>
+                <View>
+                  <Text style={styles.moreItemTitle}>My Saved Watchlist</Text>
+                  <Text style={styles.moreItemSub}>View and manage your saved movies and series</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setMoreMenuVisible(false);
+                  navigation.navigate('Settings');
+                }}
+                style={({ hovered }: any) => [
+                  styles.moreMenuItem,
+                  hovered && styles.moreMenuItemHovered,
+                ]}
+              >
+                <Text style={styles.moreItemIcon}>⚙</Text>
+                <View>
+                  <Text style={styles.moreItemTitle}>System & Audio Settings</Text>
+                  <Text style={styles.moreItemSub}>Configure subtitles, audio tracks and streaming buffer</Text>
+                </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setMoreMenuVisible(false);
+                  setAccountModalVisible(true);
+                }}
+                style={({ hovered }: any) => [
+                  styles.moreMenuItem,
+                  hovered && styles.moreMenuItemHovered,
+                ]}
+              >
+                <Text style={styles.moreItemIcon}>👤</Text>
+                <View>
+                  <Text style={styles.moreItemTitle}>Account Profile</Text>
+                  <Text style={styles.moreItemSub}>Nishant Kumar • Hackathon VIP Member</Text>
+                </View>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Account Settings Modal */}
       <Modal
@@ -366,11 +475,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     // @ts-ignore
     cursor: 'pointer',
   },
   drawerToggleBtnHovered: {
-    backgroundColor: 'rgba(229, 169, 60, 0.25)',
+    backgroundColor: 'rgba(229, 169, 60, 0.35)',
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 18px #FFFFFF',
+    transform: [{ scale: 1.1 }],
   },
   drawerToggleIcon: {
     fontSize: 20,
@@ -737,5 +852,100 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#0B0D11',
+  },
+  threeDotsBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  threeDotsBtnHovered: {
+    backgroundColor: 'rgba(229, 169, 60, 0.35)',
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 16px #FFFFFF',
+    transform: [{ scale: 1.15 }],
+  },
+  threeDotsIcon: {
+    fontSize: 20,
+    color: colors.text,
+    lineHeight: 22,
+    fontWeight: '900',
+  },
+  moreMenuCard: {
+    width: 440,
+    maxWidth: '90%',
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.9,
+    shadowRadius: 28,
+  },
+  moreMenuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  moreMenuTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  closeMoreBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  moreMenuItems: {
+    paddingTop: 12,
+    gap: 8,
+  },
+  moreMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 12,
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  moreMenuItemHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: colors.primary,
+  },
+  moreItemIcon: {
+    fontSize: 22,
+  },
+  moreItemTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  moreItemSub: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 });

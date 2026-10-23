@@ -3,8 +3,7 @@ import { View, Platform, StyleSheet, Text } from 'react-native';
 import { SpatialNavigationRoot } from 'react-tv-space-navigation';
 import { useIsFocused, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { VideoRef } from 'react-native-video';
-import VideoPlayer from '../components/player/VideoPlayer';
+import VideoPlayer, { VideoPlayerRef } from '../components/player/VideoPlayer';
 import VideoOverlay from '../components/player/VideoOverlay';
 import { ViewEaseAssistOverlay } from '../components/player/ViewEaseAssistOverlay';
 import { RootStackParamList } from '../navigation/types';
@@ -43,7 +42,7 @@ export default function PlayerScreen() {
 
   const [duration, setDuration] = useState<number>(catalogEntry.duration || 732);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const videoRef = useRef<VideoRef>(null);
+  const videoRef = useRef<VideoPlayerRef>(null);
 
   const handleExit = useCallback(() => {
     // Save progress on exit
@@ -135,6 +134,7 @@ export default function PlayerScreen() {
           onProgress={onVideoProgress}
           onLoad={onVideoLoad}
           onEnd={onVideoEnd}
+          onError={(e) => setPlaybackError("Playing fallback offline sample stream")}
         />
 
         {/* Video Player Error State (Graceful fallback) */}
@@ -152,10 +152,13 @@ export default function PlayerScreen() {
           onPlayPause={togglePlayPause}
           onExit={handleExit}
           onSeekRelative={seekRelative}
+          onSeekTo={seek}
           onOpenAssist={openAssist}
+          onSpeedChange={(speed) => videoRef.current?.setPlaybackRate?.(speed)}
           currentTime={currentTime}
           duration={duration}
           title={displayTitle}
+          previewImage={headerImage || catalogEntry.headerImage}
           isBuffering={isBuffering}
         />
 

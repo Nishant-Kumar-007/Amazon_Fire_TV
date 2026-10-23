@@ -5,10 +5,13 @@ interface VideoOverlayProps {
     onPlayPause: () => void;
     onExit: () => void;
     onSeekRelative: (seconds: number) => void;
+    onSeekTo?: (seconds: number) => void;
     onOpenAssist: () => void;
+    onSpeedChange?: (speed: number) => void;
     currentTime: number;
     duration: number;
     title?: string;
+    previewImage?: string;
     isBuffering?: boolean;
 }
 declare const VideoOverlay: React.FC<VideoOverlayProps>;

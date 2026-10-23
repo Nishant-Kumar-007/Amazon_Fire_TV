@@ -124,7 +124,7 @@ function PlayerScreen() {
     return (<react_tv_space_navigation_1.SpatialNavigationRoot isActive={isFocused}>
       <react_native_1.View style={styles.container}>
         {/* Real Video Player Component */}
-        <VideoPlayer_1.default ref={videoRef} movie={movie || catalogEntry.movie} headerImage={headerImage || catalogEntry.headerImage} paused={playbackState === TVBridge_1.TVPlaybackState.PAUSED} controls={false} onBuffer={setIsBuffering} onProgress={onVideoProgress} onLoad={onVideoLoad} onEnd={onVideoEnd}/>
+        <VideoPlayer_1.default ref={videoRef} movie={movie || catalogEntry.movie} headerImage={headerImage || catalogEntry.headerImage} paused={playbackState === TVBridge_1.TVPlaybackState.PAUSED} controls={false} onBuffer={setIsBuffering} onProgress={onVideoProgress} onLoad={onVideoLoad} onEnd={onVideoEnd} onError={(e) => setPlaybackError("Playing fallback offline sample stream")}/>
 
         {/* Video Player Error State (Graceful fallback) */}
         {playbackError && (<react_native_1.View style={styles.errorOverlay}>
@@ -133,7 +133,7 @@ function PlayerScreen() {
           </react_native_1.View>)}
 
         {/* TV On-Screen Transport Controls Overlay */}
-        <VideoOverlay_1.default visible={controlsVisible && !assistVisible} paused={playbackState === TVBridge_1.TVPlaybackState.PAUSED} onPlayPause={togglePlayPause} onExit={handleExit} onSeekRelative={seekRelative} onOpenAssist={openAssist} currentTime={currentTime} duration={duration} title={displayTitle} isBuffering={isBuffering}/>
+        <VideoOverlay_1.default visible={controlsVisible && !assistVisible} paused={playbackState === TVBridge_1.TVPlaybackState.PAUSED} onPlayPause={togglePlayPause} onExit={handleExit} onSeekRelative={seekRelative} onSeekTo={seek} onOpenAssist={openAssist} onSpeedChange={(speed) => videoRef.current?.setPlaybackRate?.(speed)} currentTime={currentTime} duration={duration} title={displayTitle} previewImage={headerImage || catalogEntry.headerImage} isBuffering={isBuffering}/>
 
         {/* ViewEase Assist - Contextual Viewing Companion Overlay */}
         <ViewEaseAssistOverlay_1.ViewEaseAssistOverlay visible={assistVisible} titleId={titleId} currentTime={currentTime} onClose={closeAssist} onSeekTo={(timeSec) => {

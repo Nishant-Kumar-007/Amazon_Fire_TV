@@ -22,6 +22,8 @@ export interface TVPlatformCapabilities {
   supportsNativeVideo: boolean;
   supportsSpatialNav: boolean;
   audioPassthrough: boolean;
+  supportsFocus: boolean;
+  hasHardwareAcceleration: boolean;
 }
 
 export function getTVPlatformCapabilities(): TVPlatformCapabilities {
@@ -34,6 +36,8 @@ export function getTVPlatformCapabilities(): TVPlatformCapabilities {
       supportsNativeVideo: true,
       supportsSpatialNav: true,
       audioPassthrough: true,
+      supportsFocus: true,
+      hasHardwareAcceleration: true,
     };
   }
 
@@ -45,6 +49,8 @@ export function getTVPlatformCapabilities(): TVPlatformCapabilities {
       supportsNativeVideo: true,
       supportsSpatialNav: true,
       audioPassthrough: true,
+      supportsFocus: true,
+      hasHardwareAcceleration: true,
     };
   }
 
@@ -56,6 +62,8 @@ export function getTVPlatformCapabilities(): TVPlatformCapabilities {
       supportsNativeVideo: true,
       supportsSpatialNav: true,
       audioPassthrough: false,
+      supportsFocus: true,
+      hasHardwareAcceleration: true,
     };
   }
 
@@ -66,13 +74,38 @@ export function getTVPlatformCapabilities(): TVPlatformCapabilities {
     supportsNativeVideo: true,
     supportsSpatialNav: true,
     audioPassthrough: false,
+    supportsFocus: true,
+    hasHardwareAcceleration: true,
   };
 }
 
 // Focus Restoration Manager
 class FocusRestorationManagerClass {
+  private static instance: FocusRestorationManagerClass;
   private lastFocusedMap: Map<string, string> = new Map();
   private focusHistory: Array<{ screen: string; focusId: string; timestamp: number }> = [];
+  private focusStack: string[] = [];
+
+  public static getInstance(): FocusRestorationManagerClass {
+    if (!FocusRestorationManagerClass.instance) {
+      FocusRestorationManagerClass.instance = new FocusRestorationManagerClass();
+    }
+    return FocusRestorationManagerClass.instance;
+  }
+
+  public pushFocusNode(nodeId: string): void {
+    if (nodeId) {
+      this.focusStack.push(nodeId);
+    }
+  }
+
+  public popFocusNode(): string | null {
+    return this.focusStack.pop() || null;
+  }
+
+  public peekFocusNode(): string | null {
+    return this.focusStack.length > 0 ? this.focusStack[this.focusStack.length - 1] : null;
+  }
 
   public saveFocus(screenName: string, focusId: string): void {
     if (!screenName || !focusId) return;
@@ -97,11 +130,13 @@ class FocusRestorationManagerClass {
 
   public clearHistory(): void {
     this.focusHistory = [];
+    this.focusStack = [];
     this.lastFocusedMap.clear();
   }
 }
 
-export const FocusRestorationManager = new FocusRestorationManagerClass();
+export const FocusRestorationManager = FocusRestorationManagerClass.getInstance();
+(FocusRestorationManager as any).getInstance = () => FocusRestorationManagerClass.getInstance();
 
 // Reusable TV Player Controller Hook
 export interface UseTVPlayerControllerOptions {

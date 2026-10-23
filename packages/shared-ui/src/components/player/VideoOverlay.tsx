@@ -1,5 +1,13 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { View, StyleSheet, Animated, Text, Platform } from 'react-native';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  Text,
+  Pressable,
+  Platform,
+  Modal,
+} from 'react-native';
 import {
   DefaultFocus,
   SpatialNavigationFocusableView,
@@ -7,8 +15,7 @@ import {
 } from 'react-tv-space-navigation';
 import SeekBar from './SeekBar';
 import LoadingIndicator from '../LoadingIndicator';
-import { scaledPixels } from '../../hooks/useScale';
-import { safeZones, colors } from '../../theme';
+import { colors } from '../../theme';
 import PlatformLinearGradient from '../PlatformLinearGradient';
 
 interface VideoOverlayProps {
@@ -17,10 +24,13 @@ interface VideoOverlayProps {
   onPlayPause: () => void;
   onExit: () => void;
   onSeekRelative: (seconds: number) => void;
+  onSeekTo?: (seconds: number) => void;
   onOpenAssist: () => void;
+  onSpeedChange?: (speed: number) => void;
   currentTime: number;
   duration: number;
   title?: string;
+  previewImage?: string;
   isBuffering?: boolean;
 }
 
@@ -30,13 +40,24 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
   onPlayPause,
   onExit,
   onSeekRelative,
+  onSeekTo,
   onOpenAssist,
+  onSpeedChange,
   currentTime,
   duration,
   title = 'The Quantum Horizon',
+  previewImage,
   isBuffering = false,
 }) => {
   const opacity = useRef(new Animated.Value(0)).current;
+
+  // Settings State: Quality, Speed, Captions
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState('1080p FHD');
+  const [selectedSpeed, setSelectedSpeed] = useState<number>(1.0);
+  const [selectedCaption, setSelectedCaption] = useState('English [CC]');
+
+  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
 
   useEffect(() => {
     Animated.timing(opacity, {
@@ -58,7 +79,14 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
   const formattedCurrentTime = useMemo(() => formatTime(currentTime), [currentTime]);
   const formattedDuration = useMemo(() => formatTime(duration), [duration]);
 
-  if (!visible) {
+  const handleSpeedSelect = (speed: number) => {
+    setSelectedSpeed(speed);
+    if (onSpeedChange) {
+      onSpeedChange(speed);
+    }
+  };
+
+  if (!visible && !settingsModalVisible) {
     return null;
   }
 
@@ -66,7 +94,7 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
     <Animated.View style={[styles.container, { opacity }]} pointerEvents="box-none">
       {/* Top Scrim Bar */}
       <PlatformLinearGradient
-        colors={['rgba(11, 13, 17, 0.9)', 'rgba(11, 13, 17, 0.4)', 'transparent']}
+        colors={['rgba(11, 13, 17, 0.95)', 'rgba(11, 13, 17, 0.5)', 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.topGradient}
@@ -74,50 +102,77 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
 
       {/* Top Header Bar */}
       <View style={styles.topBar}>
-        <SpatialNavigationNode orientation="horizontal">
-          <View style={styles.topBarRow}>
-            {/* Back Button */}
-            <SpatialNavigationFocusableView onSelect={onExit}>
-              {({ isFocused }) => (
-                <View style={[styles.topBtn, isFocused && styles.topBtnFocused]}>
-                  <Text style={[styles.topBtnText, isFocused && styles.topBtnTextFocused]}>
-                    ← Exit
-                  </Text>
+        <View style={styles.topBarRow}>
+          {/* Back / Exit Button */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Exit player"
+            onPress={onExit}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('exit')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.topBtn,
+              (hovered || hoveredBtn === 'exit') && styles.topBtnHovered,
+            ]}
+          >
+            <Text style={styles.topBtnText}>← Exit</Text>
+          </Pressable>
+
+          {/* Title & Info */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.videoTitle} numberOfLines={1}>
+              {title}
+            </Text>
+            <View style={styles.liveBadgeRow}>
+              <View style={styles.hdBadge}>
+                <Text style={styles.hdBadgeText}>{selectedQuality}</Text>
+              </View>
+              {selectedSpeed !== 1.0 && (
+                <View style={styles.speedBadge}>
+                  <Text style={styles.speedBadgeText}>{selectedSpeed}x</Text>
                 </View>
               )}
-            </SpatialNavigationFocusableView>
-
-            {/* Title & Info */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.videoTitle} numberOfLines={1}>
-                {title}
-              </Text>
-              <View style={styles.liveBadgeRow}>
-                <View style={styles.hdBadge}>
-                  <Text style={styles.hdBadgeText}>4K HDR</Text>
-                </View>
-                <Text style={styles.audioBadgeText}>Dolby 5.1</Text>
-              </View>
+              <Text style={styles.audioBadgeText}>Dolby Atmos • {selectedCaption}</Text>
             </View>
+          </View>
+
+          {/* Top Right Actions: Settings & Assist */}
+          <View style={styles.topRightGroup}>
+            {/* Player Settings (⚙) Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Video Settings"
+              onPress={() => setSettingsModalVisible(true)}
+              // @ts-ignore
+              onMouseEnter={() => setHoveredBtn('settings-top')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={({ hovered }: any) => [
+                styles.iconBtn,
+                (hovered || hoveredBtn === 'settings-top') && styles.iconBtnHovered,
+              ]}
+            >
+              <Text style={styles.iconBtnText}>⚙</Text>
+            </Pressable>
 
             {/* ViewEase Assist Top CTA */}
-            <SpatialNavigationFocusableView onSelect={onOpenAssist}>
-              {({ isFocused }) => (
-                <View style={[styles.assistTopBtn, isFocused && styles.assistTopBtnFocused]}>
-                  <Text style={styles.assistTopBtnIcon}>⚡</Text>
-                  <Text
-                    style={[
-                      styles.assistTopBtnText,
-                      isFocused && styles.assistTopBtnTextFocused,
-                    ]}
-                  >
-                    ViewEase Assist
-                  </Text>
-                </View>
-              )}
-            </SpatialNavigationFocusableView>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open ViewEase Assist"
+              onPress={onOpenAssist}
+              // @ts-ignore
+              onMouseEnter={() => setHoveredBtn('assist-top')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={({ hovered }: any) => [
+                styles.assistTopBtn,
+                (hovered || hoveredBtn === 'assist-top') && styles.assistTopBtnHovered,
+              ]}
+            >
+              <Text style={styles.assistTopBtnIcon}>⚡</Text>
+              <Text style={styles.assistTopBtnText}>ViewEase Assist</Text>
+            </Pressable>
           </View>
-        </SpatialNavigationNode>
+        </View>
       </View>
 
       {/* Center Buffering State */}
@@ -130,7 +185,7 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
 
       {/* Bottom Scrim Bar */}
       <PlatformLinearGradient
-        colors={['transparent', 'rgba(11, 13, 17, 0.65)', 'rgba(11, 13, 17, 0.95)']}
+        colors={['transparent', 'rgba(11, 13, 17, 0.7)', 'rgba(11, 13, 17, 0.98)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.bottomGradient}
@@ -138,90 +193,228 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
 
       {/* Bottom Transport Controls */}
       <View style={styles.bottomControls}>
-        {/* SeekBar Line & Timestamp */}
+        {/* SeekBar Line & Timestamp with Hover Thumbnail Frame Preview */}
         <View style={styles.seekBarRow}>
           <Text style={styles.timeLabel}>{formattedCurrentTime}</Text>
           <View style={styles.seekBarWrapper}>
-            <SeekBar currentTime={currentTime} duration={duration} />
+            <SeekBar
+              currentTime={currentTime}
+              duration={duration}
+              previewImage={previewImage}
+              onSeekTo={onSeekTo}
+            />
           </View>
           <Text style={styles.timeLabel}>{formattedDuration}</Text>
         </View>
 
-        {/* Buttons Row */}
-        <SpatialNavigationNode orientation="horizontal">
-          <View style={styles.controlsRow}>
-            {/* Rewind -10s */}
-            <SpatialNavigationFocusableView onSelect={() => onSeekRelative(-10)}>
-              {({ isFocused }) => (
-                <View style={[styles.controlBtn, isFocused && styles.controlBtnFocused]}>
-                  <Text style={[styles.controlBtnText, isFocused && styles.controlBtnTextFocused]}>
-                    ⏮ -10s
-                  </Text>
-                </View>
-              )}
-            </SpatialNavigationFocusableView>
+        {/* Buttons Row with White/Amber Highlight Boundaries on Hover & Remote */}
+        <View style={styles.controlsRow}>
+          {/* Rewind -10s */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Rewind 10 seconds"
+            onPress={() => onSeekRelative(-10)}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('rewind')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.controlBtn,
+              (hovered || hoveredBtn === 'rewind') && styles.controlBtnHovered,
+            ]}
+          >
+            <Text style={styles.controlBtnText}>⏮ -10s</Text>
+          </Pressable>
 
-            {/* Play/Pause Button */}
-            <DefaultFocus>
-              <SpatialNavigationFocusableView onSelect={onPlayPause}>
-                {({ isFocused }) => (
-                  <View
-                    style={[
-                      styles.controlBtn,
-                      styles.playPauseBtn,
-                      isFocused && styles.controlBtnFocused,
-                    ]}
-                  >
-                    <Text
+          {/* Play/Pause Button */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={paused ? 'Play' : 'Pause'}
+            onPress={onPlayPause}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('play')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.controlBtn,
+              styles.playPauseBtn,
+              (hovered || hoveredBtn === 'play') && styles.playPauseBtnHovered,
+            ]}
+          >
+            <Text style={styles.playPauseBtnText}>
+              {paused ? '▶ Play' : '⏸ Pause'}
+            </Text>
+          </Pressable>
+
+          {/* FastForward +10s */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Fast forward 10 seconds"
+            onPress={() => onSeekRelative(10)}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('forward')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.controlBtn,
+              (hovered || hoveredBtn === 'forward') && styles.controlBtnHovered,
+            ]}
+          >
+            <Text style={styles.controlBtnText}>⏭ +10s</Text>
+          </Pressable>
+
+          {/* Settings Button */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            onPress={() => setSettingsModalVisible(true)}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('settings-bottom')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.controlBtn,
+              styles.settingsBtn,
+              (hovered || hoveredBtn === 'settings-bottom') && styles.controlBtnHovered,
+            ]}
+          >
+            <Text style={styles.settingsBtnIcon}>⚙</Text>
+            <Text style={styles.controlBtnText}>Settings</Text>
+          </Pressable>
+
+          {/* Assist Companion Button */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="ViewEase Assist"
+            onPress={onOpenAssist}
+            // @ts-ignore
+            onMouseEnter={() => setHoveredBtn('assist-bottom')}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={({ hovered }: any) => [
+              styles.controlBtn,
+              styles.assistBarBtn,
+              (hovered || hoveredBtn === 'assist-bottom') && styles.assistBarBtnHovered,
+            ]}
+          >
+            <Text style={styles.assistBarIcon}>⚡</Text>
+            <Text style={styles.assistBarText}>ViewEase Assist</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Video Player Settings Modal: Quality, Speed, Captions */}
+      <Modal
+        visible={settingsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSettingsModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setSettingsModalVisible(false)}
+        >
+          <Pressable style={styles.settingsModalCard} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.settingsModalHeader}>
+              <Text style={styles.settingsModalTitle}>⚙ Video Playback Settings</Text>
+              <Pressable
+                onPress={() => setSettingsModalVisible(false)}
+                style={({ hovered }: any) => [
+                  styles.closeModalBtn,
+                  hovered && styles.closeModalBtnHovered,
+                ]}
+              >
+                <Text style={styles.closeModalText}>✕</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.settingsModalBody}>
+              {/* 1. Quality Setting */}
+              <View style={styles.settingsGroup}>
+                <Text style={styles.settingsGroupTitle}>VIDEO QUALITY</Text>
+                <View style={styles.optionsRow}>
+                  {['4K UHD (2160p)', '1080p FHD', '720p HD', 'Auto (Adaptive)'].map((q) => (
+                    <Pressable
+                      key={q}
+                      onPress={() => setSelectedQuality(q)}
                       style={[
-                        styles.controlBtnText,
-                        styles.playPauseBtnText,
-                        isFocused && styles.controlBtnTextFocused,
+                        styles.optionPill,
+                        selectedQuality === q && styles.optionPillActive,
                       ]}
                     >
-                      {paused ? '▶ Play' : '⏸ Pause'}
-                    </Text>
-                  </View>
-                )}
-              </SpatialNavigationFocusableView>
-            </DefaultFocus>
-
-            {/* FastForward +10s */}
-            <SpatialNavigationFocusableView onSelect={() => onSeekRelative(10)}>
-              {({ isFocused }) => (
-                <View style={[styles.controlBtn, isFocused && styles.controlBtnFocused]}>
-                  <Text style={[styles.controlBtnText, isFocused && styles.controlBtnTextFocused]}>
-                    ⏭ +10s
-                  </Text>
+                      <Text
+                        style={[
+                          styles.optionPillText,
+                          selectedQuality === q && styles.optionPillTextActive,
+                        ]}
+                      >
+                        {q}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
-              )}
-            </SpatialNavigationFocusableView>
+              </View>
 
-            {/* Assist Companion Button */}
-            <SpatialNavigationFocusableView onSelect={onOpenAssist}>
-              {({ isFocused }) => (
-                <View
-                  style={[
-                    styles.controlBtn,
-                    styles.assistBarBtn,
-                    isFocused && styles.assistBarBtnFocused,
-                  ]}
-                >
-                  <Text style={styles.assistBarIcon}>⚡</Text>
-                  <Text
-                    style={[
-                      styles.assistBarText,
-                      isFocused && styles.assistBarTextFocused,
-                    ]}
-                  >
-                    ViewEase Assist
-                  </Text>
+              {/* 2. Playback Speed Setting */}
+              <View style={styles.settingsGroup}>
+                <Text style={styles.settingsGroupTitle}>PLAYBACK SPEED</Text>
+                <View style={styles.optionsRow}>
+                  {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((s) => (
+                    <Pressable
+                      key={s}
+                      onPress={() => handleSpeedSelect(s)}
+                      style={[
+                        styles.optionPill,
+                        selectedSpeed === s && styles.optionPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.optionPillText,
+                          selectedSpeed === s && styles.optionPillTextActive,
+                        ]}
+                      >
+                        {s === 1.0 ? '1.0x (Normal)' : `${s}x`}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
-              )}
-            </SpatialNavigationFocusableView>
-          </View>
-        </SpatialNavigationNode>
-      </View>
+              </View>
+
+              {/* 3. Captions & Subtitles Setting */}
+              <View style={styles.settingsGroup}>
+                <Text style={styles.settingsGroupTitle}>CAPTIONS & SUBTITLES</Text>
+                <View style={styles.optionsRow}>
+                  {['Off', 'English [CC]', 'Hindi [हिन्दी]', 'Spanish', 'French'].map((c) => (
+                    <Pressable
+                      key={c}
+                      onPress={() => setSelectedCaption(c)}
+                      style={[
+                        styles.optionPill,
+                        selectedCaption === c && styles.optionPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.optionPillText,
+                          selectedCaption === c && styles.optionPillTextActive,
+                        ]}
+                      >
+                        {c}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {/* Modal Done Button */}
+            <View style={styles.settingsModalFooter}>
+              <Pressable
+                onPress={() => setSettingsModalVisible(false)}
+                style={styles.doneSettingsBtn}
+              >
+                <Text style={styles.doneSettingsBtnText}>Apply & Return to Video</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Animated.View>
   );
 });
@@ -237,18 +430,18 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: scaledPixels(150),
+    height: 140,
   },
   bottomGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: scaledPixels(200),
+    height: 190,
   },
   topBar: {
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingTop: scaledPixels(safeZones.actionSafe.vertical),
+    paddingHorizontal: 40,
+    paddingTop: 30,
     zIndex: 20,
   },
   topBarRow: {
@@ -258,182 +451,351 @@ const styles = StyleSheet.create({
   },
   topBtn: {
     backgroundColor: 'rgba(24, 28, 36, 0.85)',
-    paddingHorizontal: scaledPixels(18),
-    paddingVertical: scaledPixels(10),
-    borderRadius: scaledPixels(8),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  topBtnFocused: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.05 }],
+  topBtnHovered: {
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    // @ts-ignore
+    boxShadow: '0 0 16px #FFFFFF',
   },
   topBtnText: {
-    color: colors.text,
-    fontSize: scaledPixels(16),
+    fontSize: 14,
     fontWeight: '700',
-  },
-  topBtnTextFocused: {
-    color: colors.textOnPrimary,
+    color: colors.text,
   },
   titleContainer: {
-    alignItems: 'center',
     flex: 1,
-    marginHorizontal: scaledPixels(20),
+    marginHorizontal: 24,
   },
   videoTitle: {
-    color: colors.text,
-    fontSize: scaledPixels(24),
+    fontSize: 22,
     fontWeight: '800',
+    color: colors.text,
     letterSpacing: 0.5,
   },
   liveBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: scaledPixels(4),
+    marginTop: 4,
+    gap: 8,
   },
   hdBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: scaledPixels(6),
-    paddingVertical: scaledPixels(2),
-    borderRadius: scaledPixels(3),
-    marginEnd: scaledPixels(8),
+    backgroundColor: 'rgba(229, 169, 60, 0.25)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   hdBadgeText: {
-    color: colors.text,
-    fontSize: scaledPixels(11),
-    fontWeight: '700',
+    fontSize: 10,
+    color: colors.primary,
+    fontWeight: '800',
+  },
+  speedBadge: {
+    backgroundColor: 'rgba(52, 152, 219, 0.25)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#3498db',
+  },
+  speedBadgeText: {
+    fontSize: 10,
+    color: '#3498db',
+    fontWeight: '800',
   },
   audioBadgeText: {
-    color: colors.textTertiary,
-    fontSize: scaledPixels(12),
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  topRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(24, 28, 36, 0.85)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  iconBtnHovered: {
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    // @ts-ignore
+    boxShadow: '0 0 16px #FFFFFF',
+  },
+  iconBtnText: {
+    fontSize: 18,
+    color: colors.text,
   },
   assistTopBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(229, 169, 60, 0.2)',
-    paddingHorizontal: scaledPixels(18),
-    paddingVertical: scaledPixels(10),
-    borderRadius: scaledPixels(20),
-    borderWidth: scaledPixels(2),
+    borderWidth: 1.5,
     borderColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 24,
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  assistTopBtnFocused: {
+  assistTopBtnHovered: {
     backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.06 }],
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 20px rgba(229, 169, 60, 0.8)',
   },
   assistTopBtnIcon: {
-    fontSize: scaledPixels(16),
-    marginEnd: scaledPixels(6),
+    fontSize: 14,
+    color: colors.primary,
+    marginRight: 6,
   },
   assistTopBtnText: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(16),
-    fontWeight: '700',
-  },
-  assistTopBtnTextFocused: {
-    color: colors.textOnPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
   bufferingBox: {
     alignSelf: 'center',
+    backgroundColor: 'rgba(11, 13, 17, 0.85)',
+    paddingHorizontal: 28,
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: 'rgba(11, 13, 17, 0.75)',
-    padding: scaledPixels(20),
-    borderRadius: scaledPixels(12),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   bufferingText: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(16),
-    marginTop: scaledPixels(12),
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 10,
   },
   bottomControls: {
-    paddingHorizontal: scaledPixels(safeZones.actionSafe.horizontal),
-    paddingBottom: scaledPixels(safeZones.actionSafe.vertical),
+    paddingHorizontal: 40,
+    paddingBottom: 28,
     zIndex: 20,
   },
   seekBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: scaledPixels(14),
+    marginBottom: 16,
   },
   timeLabel: {
-    color: colors.textSecondary,
-    fontSize: scaledPixels(15),
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'web' ? 'monospace' : 'System',
-    width: scaledPixels(60),
-    textAlign: 'center',
+    fontSize: 13,
+    color: colors.text,
+    fontWeight: '700',
+    width: 55,
   },
   seekBarWrapper: {
     flex: 1,
-    marginHorizontal: scaledPixels(12),
+    marginHorizontal: 14,
   },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 16,
   },
   controlBtn: {
-    backgroundColor: colors.card,
-    paddingHorizontal: scaledPixels(20),
-    paddingVertical: scaledPixels(12),
-    borderRadius: scaledPixels(8),
-    marginHorizontal: scaledPixels(10),
-    borderWidth: scaledPixels(2),
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(24, 28, 36, 0.85)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 11,
+    borderRadius: 10,
+    // @ts-ignore
+    cursor: 'pointer',
   },
-  playPauseBtn: {
-    backgroundColor: colors.cardElevated,
-    paddingHorizontal: scaledPixels(28),
-  },
-  controlBtnFocused: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.08 }],
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: scaledPixels(12),
-    elevation: 8,
+  controlBtnHovered: {
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    // @ts-ignore
+    boxShadow: '0 0 20px #FFFFFF',
+    transform: [{ scale: 1.05 }],
   },
   controlBtnText: {
-    color: colors.text,
-    fontSize: scaledPixels(16),
+    fontSize: 14,
     fontWeight: '700',
+    color: colors.text,
+  },
+  playPauseBtn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+  },
+  playPauseBtnHovered: {
+    backgroundColor: '#F5BE58',
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 24px rgba(229, 169, 60, 0.9)',
+    transform: [{ scale: 1.08 }],
   },
   playPauseBtnText: {
-    fontSize: scaledPixels(18),
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#0B0D11',
   },
-  controlBtnTextFocused: {
-    color: colors.textOnPrimary,
+  settingsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settingsBtnIcon: {
+    fontSize: 14,
+    color: colors.text,
   },
   assistBarBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(229, 169, 60, 0.15)',
     borderColor: colors.primary,
-    marginStart: scaledPixels(20),
+    gap: 6,
   },
-  assistBarBtnFocused: {
+  assistBarBtnHovered: {
     backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
-    transform: [{ scale: 1.08 }],
+    borderColor: '#FFFFFF',
+    // @ts-ignore
+    boxShadow: '0 0 22px rgba(229, 169, 60, 0.8)',
+    transform: [{ scale: 1.05 }],
   },
   assistBarIcon: {
-    fontSize: scaledPixels(16),
-    marginEnd: scaledPixels(6),
+    fontSize: 14,
+    color: colors.primary,
   },
   assistBarText: {
-    color: colors.primaryLight,
-    fontSize: scaledPixels(16),
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+
+  // Settings Modal Styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsModalCard: {
+    width: 600,
+    maxWidth: '92%',
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.9,
+    shadowRadius: 28,
+  },
+  settingsModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  settingsModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  closeModalBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  closeModalBtnHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  closeModalText: {
+    color: colors.text,
+    fontSize: 16,
     fontWeight: '700',
   },
-  assistBarTextFocused: {
-    color: colors.textOnPrimary,
+  settingsModalBody: {
+    paddingVertical: 18,
+  },
+  settingsGroup: {
+    marginBottom: 18,
+  },
+  settingsGroupTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  optionPillActive: {
+    backgroundColor: 'rgba(229, 169, 60, 0.25)',
+    borderColor: colors.primary,
+  },
+  optionPillText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  optionPillTextActive: {
+    color: colors.primary,
+    fontWeight: '800',
+  },
+  settingsModalFooter: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  doneSettingsBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    // @ts-ignore
+    cursor: 'pointer',
+  },
+  doneSettingsBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0B0D11',
   },
 });
 

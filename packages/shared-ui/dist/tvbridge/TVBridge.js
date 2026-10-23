@@ -31,6 +31,8 @@ function getTVPlatformCapabilities() {
             supportsNativeVideo: true,
             supportsSpatialNav: true,
             audioPassthrough: true,
+            supportsFocus: true,
+            hasHardwareAcceleration: true,
         };
     }
     if (react_native_1.Platform.OS === 'android') {
@@ -41,6 +43,8 @@ function getTVPlatformCapabilities() {
             supportsNativeVideo: true,
             supportsSpatialNav: true,
             audioPassthrough: true,
+            supportsFocus: true,
+            hasHardwareAcceleration: true,
         };
     }
     if (react_native_1.Platform.OS === 'ios') {
@@ -51,6 +55,8 @@ function getTVPlatformCapabilities() {
             supportsNativeVideo: true,
             supportsSpatialNav: true,
             audioPassthrough: false,
+            supportsFocus: true,
+            hasHardwareAcceleration: true,
         };
     }
     return {
@@ -60,12 +66,33 @@ function getTVPlatformCapabilities() {
         supportsNativeVideo: true,
         supportsSpatialNav: true,
         audioPassthrough: false,
+        supportsFocus: true,
+        hasHardwareAcceleration: true,
     };
 }
 // Focus Restoration Manager
 class FocusRestorationManagerClass {
+    static instance;
     lastFocusedMap = new Map();
     focusHistory = [];
+    focusStack = [];
+    static getInstance() {
+        if (!FocusRestorationManagerClass.instance) {
+            FocusRestorationManagerClass.instance = new FocusRestorationManagerClass();
+        }
+        return FocusRestorationManagerClass.instance;
+    }
+    pushFocusNode(nodeId) {
+        if (nodeId) {
+            this.focusStack.push(nodeId);
+        }
+    }
+    popFocusNode() {
+        return this.focusStack.pop() || null;
+    }
+    peekFocusNode() {
+        return this.focusStack.length > 0 ? this.focusStack[this.focusStack.length - 1] : null;
+    }
     saveFocus(screenName, focusId) {
         if (!screenName || !focusId)
             return;
@@ -87,10 +114,12 @@ class FocusRestorationManagerClass {
     }
     clearHistory() {
         this.focusHistory = [];
+        this.focusStack = [];
         this.lastFocusedMap.clear();
     }
 }
-exports.FocusRestorationManager = new FocusRestorationManagerClass();
+exports.FocusRestorationManager = FocusRestorationManagerClass.getInstance();
+exports.FocusRestorationManager.getInstance = () => FocusRestorationManagerClass.getInstance();
 function useTVPlayerController(options) {
     const { duration, initialTime = 0, onSeek, onExit, onToggleAssist, controlsTimeoutMs = 5000, } = options;
     const [playbackState, setPlaybackState] = (0, react_1.useState)(TVPlaybackState.BUFFERING);

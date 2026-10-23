@@ -42,6 +42,7 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
     const navigation = (0, native_1.useNavigation)();
     const [hoveredTab, setHoveredTab] = (0, react_1.useState)(null);
     const [accountModalVisible, setAccountModalVisible] = (0, react_1.useState)(false);
+    const [moreMenuVisible, setMoreMenuVisible] = (0, react_1.useState)(false);
     const [selectedQuality, setSelectedQuality] = (0, react_1.useState)('4K Ultra HD');
     const [selectedLanguage, setSelectedLanguage] = (0, react_1.useState)('English [Hindi Available]');
     const navItems = [
@@ -175,7 +176,87 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
             <react_native_1.Text style={styles.accountPlan}>VIP Pass</react_native_1.Text>
           </react_native_1.View>
         </react_native_1.Pressable>
+
+        {/* Dedicated Three Dots (⋮) Button with High-Contrast Hover Highlighting */}
+        <react_native_1.Pressable accessibilityRole="button" accessibilityLabel="More Options" onPress={() => setMoreMenuVisible(true)} style={({ hovered }) => [
+            styles.threeDotsBtn,
+            hovered && styles.threeDotsBtnHovered,
+        ]}>
+          <react_native_1.Text style={styles.threeDotsIcon}>⋮</react_native_1.Text>
+        </react_native_1.Pressable>
       </react_native_1.View>
+
+      {/* Three Dots More Menu Modal */}
+      <react_native_1.Modal visible={moreMenuVisible} transparent animationType="fade" onRequestClose={() => setMoreMenuVisible(false)}>
+        <react_native_1.Pressable style={styles.modalBackdrop} onPress={() => setMoreMenuVisible(false)}>
+          <react_native_1.Pressable style={styles.moreMenuCard} onPress={(e) => e.stopPropagation()}>
+            <react_native_1.View style={styles.moreMenuHeader}>
+              <react_native_1.Text style={styles.moreMenuTitle}>More Options & Quick Actions</react_native_1.Text>
+              <react_native_1.Pressable onPress={() => setMoreMenuVisible(false)} style={styles.closeMoreBtn}>
+                <react_native_1.Text style={styles.closeModalText}>✕</react_native_1.Text>
+              </react_native_1.Pressable>
+            </react_native_1.View>
+
+            <react_native_1.View style={styles.moreMenuItems}>
+              <react_native_1.Pressable onPress={() => {
+            setMoreMenuVisible(false);
+            navigation.navigate('FocusLab');
+        }} style={({ hovered }) => [
+            styles.moreMenuItem,
+            hovered && styles.moreMenuItemHovered,
+        ]}>
+                <react_native_1.Text style={styles.moreItemIcon}>⚡</react_native_1.Text>
+                <react_native_1.View>
+                  <react_native_1.Text style={styles.moreItemTitle}>FocusLab™ Diagnostics</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>Test remote D-pad, Fire OS & Vega OS runtime</react_native_1.Text>
+                </react_native_1.View>
+              </react_native_1.Pressable>
+
+              <react_native_1.Pressable onPress={() => {
+            setMoreMenuVisible(false);
+            navigation.navigate('TV');
+        }} style={({ hovered }) => [
+            styles.moreMenuItem,
+            hovered && styles.moreMenuItemHovered,
+        ]}>
+                <react_native_1.Text style={styles.moreItemIcon}>🔖</react_native_1.Text>
+                <react_native_1.View>
+                  <react_native_1.Text style={styles.moreItemTitle}>My Saved Watchlist</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>View and manage your saved movies and series</react_native_1.Text>
+                </react_native_1.View>
+              </react_native_1.Pressable>
+
+              <react_native_1.Pressable onPress={() => {
+            setMoreMenuVisible(false);
+            navigation.navigate('Settings');
+        }} style={({ hovered }) => [
+            styles.moreMenuItem,
+            hovered && styles.moreMenuItemHovered,
+        ]}>
+                <react_native_1.Text style={styles.moreItemIcon}>⚙</react_native_1.Text>
+                <react_native_1.View>
+                  <react_native_1.Text style={styles.moreItemTitle}>System & Audio Settings</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>Configure subtitles, audio tracks and streaming buffer</react_native_1.Text>
+                </react_native_1.View>
+              </react_native_1.Pressable>
+
+              <react_native_1.Pressable onPress={() => {
+            setMoreMenuVisible(false);
+            setAccountModalVisible(true);
+        }} style={({ hovered }) => [
+            styles.moreMenuItem,
+            hovered && styles.moreMenuItemHovered,
+        ]}>
+                <react_native_1.Text style={styles.moreItemIcon}>👤</react_native_1.Text>
+                <react_native_1.View>
+                  <react_native_1.Text style={styles.moreItemTitle}>Account Profile</react_native_1.Text>
+                  <react_native_1.Text style={styles.moreItemSub}>Nishant Kumar • Hackathon VIP Member</react_native_1.Text>
+                </react_native_1.View>
+              </react_native_1.Pressable>
+            </react_native_1.View>
+          </react_native_1.Pressable>
+        </react_native_1.Pressable>
+      </react_native_1.Modal>
 
       {/* Account Settings Modal */}
       <react_native_1.Modal visible={accountModalVisible} transparent animationType="fade" onRequestClose={() => setAccountModalVisible(false)}>
@@ -305,11 +386,17 @@ const styles = react_native_1.StyleSheet.create({
         borderRadius: 8,
         marginRight: 14,
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         // @ts-ignore
         cursor: 'pointer',
     },
     drawerToggleBtnHovered: {
-        backgroundColor: 'rgba(229, 169, 60, 0.25)',
+        backgroundColor: 'rgba(229, 169, 60, 0.35)',
+        borderColor: '#FFFFFF',
+        // @ts-ignore
+        boxShadow: '0 0 18px #FFFFFF',
+        transform: [{ scale: 1.1 }],
     },
     drawerToggleIcon: {
         fontSize: 20,
@@ -675,5 +762,100 @@ const styles = react_native_1.StyleSheet.create({
         fontSize: 13,
         fontWeight: '800',
         color: '#0B0D11',
+    },
+    threeDotsBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 10,
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    threeDotsBtnHovered: {
+        backgroundColor: 'rgba(229, 169, 60, 0.35)',
+        borderColor: '#FFFFFF',
+        // @ts-ignore
+        boxShadow: '0 0 16px #FFFFFF',
+        transform: [{ scale: 1.15 }],
+    },
+    threeDotsIcon: {
+        fontSize: 20,
+        color: theme_1.colors.text,
+        lineHeight: 22,
+        fontWeight: '900',
+    },
+    moreMenuCard: {
+        width: 440,
+        maxWidth: '90%',
+        backgroundColor: '#161B22',
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.9,
+        shadowRadius: 28,
+    },
+    moreMenuHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingBottom: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    moreMenuTitle: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: theme_1.colors.text,
+    },
+    closeMoreBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    moreMenuItems: {
+        paddingTop: 12,
+        gap: 8,
+    },
+    moreMenuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.04)',
+        borderWidth: 1,
+        borderColor: 'transparent',
+        gap: 12,
+        // @ts-ignore
+        cursor: 'pointer',
+    },
+    moreMenuItemHovered: {
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        borderColor: theme_1.colors.primary,
+    },
+    moreItemIcon: {
+        fontSize: 22,
+    },
+    moreItemTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: theme_1.colors.text,
+    },
+    moreItemSub: {
+        fontSize: 11,
+        color: theme_1.colors.textMuted,
+        marginTop: 2,
     },
 });
