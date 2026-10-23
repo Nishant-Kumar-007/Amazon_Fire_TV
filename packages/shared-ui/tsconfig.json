@@ -2,10 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["../../apps/expo-multi-tv/node_modules/*"]
+    },
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx", "src/**/*.vega.tsx", "src/**/*.kepler.ts"]
 }

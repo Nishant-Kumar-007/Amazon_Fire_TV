@@ -30,3 +30,8 @@ export * from './navigation/types';
 
 // Hooks
 export { scaledPixels } from './hooks/useScale';
+
+// Remote Control
+import './app/configureRemoteControl';
+export { default as RemoteControlManager } from './app/remote-control/RemoteControlManager';
+export * from './app/remote-control/SupportedKeys';

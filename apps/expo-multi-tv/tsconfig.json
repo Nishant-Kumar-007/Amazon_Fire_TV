@@ -3,14 +3,26 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "strict": true,
+    "skipLibCheck": true,
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@multi-tv/shared-ui": [
+        "../../packages/shared-ui/dist/index.d.ts"
+      ],
+      "@multi-tv/shared-ui/*": [
+        "../../packages/shared-ui/dist/*"
       ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx"
+  ],
+  "exclude": [
+    "__tests__",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

@@ -26,7 +26,7 @@ export default function PlayerScreen() {
   const [isVideoBuffering, setIsVideoBuffering] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const videoRef = useRef<VideoRef>(null);
-  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTimeRef = useRef<number>(0);
   const durationRef = useRef<number>(0);
 

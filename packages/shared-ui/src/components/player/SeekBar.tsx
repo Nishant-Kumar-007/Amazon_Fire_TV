@@ -14,8 +14,8 @@ const SeekBar = React.memo(({ currentTime, duration }: SeekBarProps) => {
   }, [currentTime, duration]);
 
   const thumbPosition = I18nManager.isRTL
-    ? { right: `${percentage}%` }
-    : { left: `${percentage}%` };
+    ? ({ right: `${percentage}%` } as const)
+    : ({ left: `${percentage}%` } as const);
 
   return (
     <View style={seekBarStyles.seekbarContainer}>

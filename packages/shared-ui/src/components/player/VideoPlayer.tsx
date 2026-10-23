@@ -41,12 +41,13 @@ const VideoPlayer = React.memo(
       const posterConfig = useMemo(
         () =>
           Platform.OS === "web"
-            ? {}
-            : {
-                source: { uri: headerImage },
-                resizeMode: "cover" as const,
-                style: { width: "100%", height: "100%" },
-              },
+            ? headerImage || undefined
+            : headerImage
+              ? {
+                  source: { uri: headerImage },
+                  resizeMode: "cover" as const,
+                }
+              : undefined,
         [headerImage],
       );
 

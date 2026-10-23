@@ -17,10 +17,10 @@ const KEY_MAPPING: Record<string, SupportedKeys> = {
 
 class RemoteControlManager implements RemoteControlManagerInterface {
   private eventEmitter = mitt<{ keyDown: SupportedKeys }>();
-  private tvEventSubscription: EventSubscription;
+  private tvEventSubscription?: EventSubscription;
 
   constructor() {
-    this.tvEventSubscription = TVEventHandler.addListener(this.handleKeyDown);
+    this.tvEventSubscription = TVEventHandler?.addListener ? TVEventHandler.addListener(this.handleKeyDown) : undefined;
   }
 
   private handleKeyDown = (evt: HWEvent): void => {
@@ -46,7 +46,7 @@ class RemoteControlManager implements RemoteControlManagerInterface {
   };
 
   cleanup = (): void => {
-    this.tvEventSubscription.remove();
+    this.tvEventSubscription?.remove();
   };
 }
 
