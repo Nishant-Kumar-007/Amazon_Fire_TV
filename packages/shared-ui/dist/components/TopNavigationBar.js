@@ -147,13 +147,6 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
           <react_native_1.Text style={styles.focusLabText}>FocusLab™</react_native_1.Text>
         </react_native_1.Pressable>
 
-        {/* Settings Button */}
-        <react_native_1.Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => navigation.navigate('Settings')} style={({ hovered }) => [
-            styles.iconButton,
-            hovered && styles.iconButtonHovered,
-        ]}>
-          <react_native_1.Text style={styles.iconBtnText}>⚙</react_native_1.Text>
-        </react_native_1.Pressable>
 
         {/* My Account Button */}
         <react_native_1.Pressable accessibilityRole="button" accessibilityLabel="My Account" onPress={() => setAccountModalVisible(true)} style={({ hovered }) => [

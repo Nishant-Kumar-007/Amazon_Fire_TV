@@ -70,8 +70,11 @@ const VideoPlayer = react_1.default.memo(react_1.default.forwardRef(({ movie, he
                 const playPromise = webVideoRef.current.play();
                 if (playPromise !== undefined) {
                     playPromise.catch((err) => {
-                        // Autoplay policy or user gesture requirement
-                        console.warn("Video playback error or policy restriction:", err);
+                        console.warn("Playback restriction, retrying with muted:", err);
+                        if (webVideoRef.current) {
+                            webVideoRef.current.muted = true;
+                            webVideoRef.current.play().catch(() => { });
+                        }
                     });
                 }
             }
@@ -80,17 +83,12 @@ const VideoPlayer = react_1.default.memo(react_1.default.forwardRef(({ movie, he
     // Web HTML5 Video Implementation
     if (react_native_1.Platform.OS === "web") {
         return (<react_native_1.View style={styles.webContainer}>
-            <video ref={webVideoRef} src={movie} poster={headerImage} playsInline autoPlay muted preload="auto" crossOrigin="anonymous" style={{
+            <video ref={webVideoRef} src={movie} poster={headerImage} playsInline autoPlay preload="auto" style={{
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
                 backgroundColor: "#000000",
-            }} onWaiting={() => onBuffer(true)} onPlaying={() => onBuffer(false)} onCanPlay={(e) => {
-                // Unmute after autoplay starts to satisfy browser policy
-                const vid = e.target;
-                if (vid && vid.muted) {
-                    vid.muted = false;
-                }
+            }} onWaiting={() => onBuffer(true)} onPlaying={() => onBuffer(false)} onCanPlay={() => {
                 onBuffer(false);
             }} onTimeUpdate={(e) => {
                 const target = e.target;

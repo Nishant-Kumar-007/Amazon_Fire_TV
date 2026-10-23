@@ -154,18 +154,6 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
           <Text style={styles.focusLabText}>FocusLab™</Text>
         </Pressable>
 
-        {/* Settings Button */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-          onPress={() => navigation.navigate('Settings')}
-          style={({ hovered }: any) => [
-            styles.iconButton,
-            hovered && styles.iconButtonHovered,
-          ]}
-        >
-          <Text style={styles.iconBtnText}>⚙</Text>
-        </Pressable>
 
         {/* My Account Button */}
         <Pressable

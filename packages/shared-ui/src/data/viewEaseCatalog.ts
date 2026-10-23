@@ -53,7 +53,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      'https://vjs.zencdn.net/v/oceans.mp4',
     category: 'ViewEase Originals',
     genres: ['Sci-Fi', 'Mystery', 'Drama'],
     releaseYear: 2026,
@@ -186,7 +186,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://test-videos.co.uk/vids/sintel/mp4/h264/1080/Sintel_1080_10s_5MB.mp4',
     category: 'Featured',
     genres: ['Mystery', 'Cyberpunk', 'Thriller'],
     releaseYear: 2025,
@@ -235,7 +235,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1579033461380-adb47c3eb938?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      'https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_5MB.mp4',
     category: 'Documentaries',
     genres: ['Documentary', 'Nature', 'Cinematography'],
     releaseYear: 2025,
@@ -284,7 +284,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      'https://media.w3.org/2010/05/sintel/trailer.mp4',
     category: 'ViewEase Originals',
     genres: ['Drama', 'Sci-Fi', 'Adventure'],
     releaseYear: 2026,
@@ -333,7 +333,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'https://media.w3.org/2010/05/video/movie_300.mp4',
     category: 'Movies',
     genres: ['Thriller', 'Sci-Fi', 'Mystery'],
     releaseYear: 2026,
@@ -382,7 +382,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+      'https://vjs.zencdn.net/v/oceans.mp4',
     category: 'Documentaries',
     genres: ['Documentary', 'Nature', 'Science'],
     releaseYear: 2025,
@@ -409,7 +409,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      'https://media.w3.org/2010/05/bunny/trailer.mp4',
     category: 'Cartoons & Animation',
     genres: ['Animation', 'Adventure', 'Fantasy'],
     releaseYear: 2026,
@@ -452,7 +452,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4',
     category: 'Cartoons & Animation',
     genres: ['Animation', 'Comedy', 'Family', 'Sci-Fi'],
     releaseYear: 2025,
@@ -479,7 +479,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'https://test-videos.co.uk/vids/sintel/mp4/h264/1080/Sintel_1080_10s_5MB.mp4',
     category: 'Web Series',
     genres: ['Web Series', 'Sci-Fi', 'Drama', 'Adventure'],
     releaseYear: 2026,
@@ -506,7 +506,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      'https://media.w3.org/2010/05/sintel/trailer.mp4',
     category: 'Movies',
     genres: ['Movies', 'Sci-Fi', 'Action', 'Thriller'],
     releaseYear: 2026,
@@ -533,7 +533,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      'https://media.w3.org/2010/05/video/movie_300.mp4',
     category: 'Web Series',
     genres: ['Web Series', 'Cyberpunk', 'Mystery', 'Crime'],
     releaseYear: 2026,
@@ -560,7 +560,7 @@ export const VIEWEASE_CATALOG: ViewEaseTitle[] = [
     posterImage:
       'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=800&q=80',
     movie:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+      'https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_5MB.mp4',
     category: 'Documentaries',
     genres: ['Documentary', 'Science', 'Space'],
     releaseYear: 2025,

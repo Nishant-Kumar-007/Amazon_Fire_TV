@@ -45,16 +45,22 @@ const StorageService_1 = require("../services/StorageService");
 const theme_1 = require("../theme");
 const PlatformLinearGradient_1 = __importDefault(require("../components/PlatformLinearGradient"));
 const TopNavigationBar_1 = require("../components/TopNavigationBar");
-const MovieCard = ({ item, isFocused = false, progress, onPress, onFocus, }) => {
+const MovieCard = ({ item, isFocused = false, progress, onPress, onFocus, onHoverChange, }) => {
     const [isHovered, setIsHovered] = (0, react_1.useState)(false);
     const activeHighlight = isFocused || isHovered;
     return (<react_native_1.Pressable accessibilityRole="button" accessibilityLabel={`Watch ${item.title}`} onPress={onPress} 
     // @ts-ignore - web hover events
     onMouseEnter={() => {
             setIsHovered(true);
+            if (onHoverChange)
+                onHoverChange(true);
             if (onFocus)
                 onFocus();
-        }} onMouseLeave={() => setIsHovered(false)} style={({ pressed }) => [
+        }} onMouseLeave={() => {
+            setIsHovered(false);
+            if (onHoverChange)
+                onHoverChange(false);
+        }} style={({ pressed }) => [
             styles.cardContainer,
             activeHighlight && styles.cardContainerHighlighted,
             pressed && styles.cardContainerPressed,
@@ -100,6 +106,7 @@ function HomeScreen() {
     // Hero carousel state (8 featured titles auto-advancing)
     const [heroIndex, setHeroIndex] = (0, react_1.useState)(0);
     const [isHeroHovered, setIsHeroHovered] = (0, react_1.useState)(false);
+    const [isAnyCardHovered, setIsAnyCardHovered] = (0, react_1.useState)(false);
     // Category "View All" modal state
     const [viewAllModalVisible, setViewAllModalVisible] = (0, react_1.useState)(false);
     const [viewAllCategoryName, setViewAllCategoryName] = (0, react_1.useState)('');
@@ -111,15 +118,15 @@ function HomeScreen() {
     const activeHeroTitle = (0, react_1.useMemo)(() => {
         return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || viewEaseCatalog_1.VIEWEASE_CATALOG[0];
     }, [heroFeaturedTitles, heroIndex]);
-    // Auto-advance hero showcase every 5 seconds (unless hovered/interacting)
+    // Auto-advance hero showcase every 5 seconds (unless hovered/interacting with hero or any card)
     (0, react_1.useEffect)(() => {
-        if (isHeroHovered)
+        if (isHeroHovered || isAnyCardHovered)
             return;
         const interval = setInterval(() => {
             setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length);
         }, 5000);
         return () => clearInterval(interval);
-    }, [heroFeaturedTitles.length, isHeroHovered]);
+    }, [heroFeaturedTitles.length, isHeroHovered, isAnyCardHovered]);
     // Load Continue Watching on mount and focus
     (0, react_1.useEffect)(() => {
         const updateContinueWatching = () => {
@@ -315,32 +322,32 @@ function HomeScreen() {
           {continueWatching.length > 0 && (<CategoryRow rowKey="continue" title="Continue Watching" subtitle="Pick up exactly where you left off" movies={continueWatching.map((p) => {
                 const found = allMovies.find((m) => String(m.id) === p.id);
                 return found || allMovies[0];
-            })} progressMap={continueWatching} onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)} onViewAll={() => openViewAll('Continue Watching', continueWatching.map((p) => allMovies.find((m) => String(m.id) === p.id) || allMovies[0]))} rowRef={(el) => {
+            })} progressMap={continueWatching} onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Continue Watching', continueWatching.map((p) => allMovies.find((m) => String(m.id) === p.id) || allMovies[0]))} rowRef={(el) => {
                 rowRefs.current['continue'] = el;
             }} onScrollLeft={() => scrollRow('continue', 'left')} onScrollRight={() => scrollRow('continue', 'right')}/>)}
 
           {/* Trending Web Series */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Web Series') && (<CategoryRow rowKey="web-series" title="Trending Web Series" subtitle="Bingeworthy multi-episode sagas" movies={trendingWebSeries} onCardPress={navigateToDetails} onViewAll={() => openViewAll('Trending Web Series', trendingWebSeries)} rowRef={(el) => {
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Web Series') && (<CategoryRow rowKey="web-series" title="Trending Web Series" subtitle="Bingeworthy multi-episode sagas" movies={trendingWebSeries} onCardPress={navigateToDetails} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Trending Web Series', trendingWebSeries)} rowRef={(el) => {
                 rowRefs.current['web-series'] = el;
             }} onScrollLeft={() => scrollRow('web-series', 'left')} onScrollRight={() => scrollRow('web-series', 'right')}/>)}
 
           {/* Blockbuster Movies */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Movies') && (<CategoryRow rowKey="movies" title="Blockbuster Movies" subtitle="Feature films in 4K HDR & Dolby Atmos" movies={blockbusterMovies} onCardPress={navigateToDetails} onViewAll={() => openViewAll('Blockbuster Movies', blockbusterMovies)} rowRef={(el) => {
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Movies') && (<CategoryRow rowKey="movies" title="Blockbuster Movies" subtitle="Feature films in 4K HDR & Dolby Atmos" movies={blockbusterMovies} onCardPress={navigateToDetails} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Blockbuster Movies', blockbusterMovies)} rowRef={(el) => {
                 rowRefs.current['movies'] = el;
             }} onScrollLeft={() => scrollRow('movies', 'left')} onScrollRight={() => scrollRow('movies', 'right')}/>)}
 
           {/* Cartoons & Animation */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Cartoons & Animation') && (<CategoryRow rowKey="cartoons" title="Cartoons & Animation" subtitle="Anime epics & family friendly adventures" movies={cartoonsAndAnime} onCardPress={navigateToDetails} onViewAll={() => openViewAll('Cartoons & Animation', cartoonsAndAnime)} rowRef={(el) => {
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Cartoons & Animation') && (<CategoryRow rowKey="cartoons" title="Cartoons & Animation" subtitle="Anime epics & family friendly adventures" movies={cartoonsAndAnime} onCardPress={navigateToDetails} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Cartoons & Animation', cartoonsAndAnime)} rowRef={(el) => {
                 rowRefs.current['cartoons'] = el;
             }} onScrollLeft={() => scrollRow('cartoons', 'left')} onScrollRight={() => scrollRow('cartoons', 'right')}/>)}
 
           {/* Sci-Fi & Cyberpunk */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Sci-Fi') && (<CategoryRow rowKey="scifi" title="Sci-Fi & Cyberpunk" subtitle="Interstellar mysteries and synthetic realities" movies={sciFiAndCyberpunk} onCardPress={navigateToDetails} onViewAll={() => openViewAll('Sci-Fi & Cyberpunk', sciFiAndCyberpunk)} rowRef={(el) => {
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Sci-Fi') && (<CategoryRow rowKey="scifi" title="Sci-Fi & Cyberpunk" subtitle="Interstellar mysteries and synthetic realities" movies={sciFiAndCyberpunk} onCardPress={navigateToDetails} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Sci-Fi & Cyberpunk', sciFiAndCyberpunk)} rowRef={(el) => {
                 rowRefs.current['scifi'] = el;
             }} onScrollLeft={() => scrollRow('scifi', 'left')} onScrollRight={() => scrollRow('scifi', 'right')}/>)}
 
           {/* Documentaries */}
-          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Documentaries') && (<CategoryRow rowKey="docs" title="Nature & Space Documentaries" subtitle="Real scientific discoveries and cosmic horizons" movies={documentaries} onCardPress={navigateToDetails} onViewAll={() => openViewAll('Nature & Space Documentaries', documentaries)} rowRef={(el) => {
+          {(activeCategoryFilter === 'All' || activeCategoryFilter === 'Documentaries') && (<CategoryRow rowKey="docs" title="Nature & Space Documentaries" subtitle="Real scientific discoveries and cosmic horizons" movies={documentaries} onCardPress={navigateToDetails} onCardHover={setIsAnyCardHovered} onViewAll={() => openViewAll('Nature & Space Documentaries', documentaries)} rowRef={(el) => {
                 rowRefs.current['docs'] = el;
             }} onScrollLeft={() => scrollRow('docs', 'left')} onScrollRight={() => scrollRow('docs', 'right')}/>)}
         </react_native_1.View>
@@ -383,7 +390,7 @@ function HomeScreen() {
       </react_native_1.Modal>
     </react_native_1.View>);
 }
-const CategoryRow = ({ title, subtitle, movies, progressMap, onCardPress, onViewAll, rowRef, onScrollLeft, onScrollRight, }) => {
+const CategoryRow = ({ title, subtitle, movies, progressMap, onCardPress, onViewAll, rowRef, onScrollLeft, onScrollRight, onCardHover, }) => {
     return (<react_native_1.View style={styles.rowSection}>
       {/* Row Header with Category Title & "View All →" button */}
       <react_native_1.View style={styles.rowHeader}>
@@ -424,7 +431,7 @@ const CategoryRow = ({ title, subtitle, movies, progressMap, onCardPress, onView
         {movies.map((item) => {
             const prog = progressMap?.find((p) => p.id === item.id) || null;
             return (<react_native_1.View key={item.id} style={styles.cardItemWrapper}>
-              <MovieCard item={item} progress={prog} onPress={() => onCardPress(item, prog)}/>
+              <MovieCard item={item} progress={prog} onPress={() => onCardPress(item, prog)} onHoverChange={onCardHover}/>
             </react_native_1.View>);
         })}
       </react_native_1.ScrollView>
@@ -444,8 +451,7 @@ const styles = react_native_1.StyleSheet.create({
     // Split-Screen Hero Showcase Styles
     heroShowcaseContainer: {
         width: '100%',
-        // @ts-ignore - extend hero to reach content rows
-        minHeight: '88vh',
+        height: 520,
         position: 'relative',
         backgroundColor: '#0D0F14',
         overflow: 'hidden',
@@ -462,24 +468,25 @@ const styles = react_native_1.StyleSheet.create({
         left: 0,
         top: 0,
         bottom: 0,
-        width: '50%',
+        width: '55%',
     },
     heroGradientBottom: {
         position: 'absolute',
         left: 0,
         right: 0,
         bottom: 0,
-        height: 180,
+        height: 120,
     },
     heroSplitContent: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 48,
-        paddingVertical: 36,
+        paddingTop: 20,
+        paddingBottom: 20,
         zIndex: 10,
     },
     heroLeftCol: {
-        maxWidth: 820,
+        maxWidth: 780,
         width: '100%',
         justifyContent: 'center',
     },
@@ -631,39 +638,39 @@ const styles = react_native_1.StyleSheet.create({
     },
     // Dot Indicators + Progress Bar
     heroCarouselSelector: {
-        marginTop: 20,
+        marginTop: 18,
     },
     dotIndicatorRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginBottom: 12,
+        gap: 8,
+        marginBottom: 10,
     },
     dotIndicator: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.28)',
         // @ts-ignore
         cursor: 'pointer',
     },
     dotIndicatorActive: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 22,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: theme_1.colors.primary,
         // @ts-ignore
-        boxShadow: '0 0 10px rgba(229, 169, 60, 0.7)',
+        boxShadow: '0 0 10px rgba(229, 169, 60, 0.8)',
     },
     dotIndicatorHovered: {
-        backgroundColor: 'rgba(255, 255, 255, 0.55)',
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
         transform: [{ scale: 1.2 }],
     },
     heroProgressBarTrack: {
-        width: 260,
+        width: 280,
         height: 4,
         borderRadius: 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
         overflow: 'hidden',
     },
     heroProgressBarFill: {

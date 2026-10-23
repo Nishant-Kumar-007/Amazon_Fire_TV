@@ -36,6 +36,7 @@ interface MovieCardProps {
   progress?: PlaybackProgress | null;
   onPress: () => void;
   onFocus?: () => void;
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
 const MovieCard: React.FC<MovieCardProps> = ({
@@ -44,6 +45,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
   progress,
   onPress,
   onFocus,
+  onHoverChange,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const activeHighlight = isFocused || isHovered;
@@ -56,9 +58,13 @@ const MovieCard: React.FC<MovieCardProps> = ({
       // @ts-ignore - web hover events
       onMouseEnter={() => {
         setIsHovered(true);
+        if (onHoverChange) onHoverChange(true);
         if (onFocus) onFocus();
       }}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        if (onHoverChange) onHoverChange(false);
+      }}
       style={({ pressed }: any) => [
         styles.cardContainer,
         activeHighlight && styles.cardContainerHighlighted,
@@ -127,6 +133,7 @@ export default function HomeScreen() {
   // Hero carousel state (8 featured titles auto-advancing)
   const [heroIndex, setHeroIndex] = useState(0);
   const [isHeroHovered, setIsHeroHovered] = useState(false);
+  const [isAnyCardHovered, setIsAnyCardHovered] = useState(false);
 
   // Category "View All" modal state
   const [viewAllModalVisible, setViewAllModalVisible] = useState(false);
@@ -142,15 +149,15 @@ export default function HomeScreen() {
     return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || VIEWEASE_CATALOG[0];
   }, [heroFeaturedTitles, heroIndex]);
 
-  // Auto-advance hero showcase every 5 seconds (unless hovered/interacting)
+  // Auto-advance hero showcase every 5 seconds (unless hovered/interacting with hero or any card)
   useEffect(() => {
-    if (isHeroHovered) return;
+    if (isHeroHovered || isAnyCardHovered) return;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [heroFeaturedTitles.length, isHeroHovered]);
+  }, [heroFeaturedTitles.length, isHeroHovered, isAnyCardHovered]);
 
   // Load Continue Watching on mount and focus
   useEffect(() => {
@@ -466,6 +473,7 @@ export default function HomeScreen() {
               })}
               progressMap={continueWatching}
               onCardPress={(item, prog) => navigateToPlayer(item, prog?.positionSec || 0)}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() =>
                 openViewAll(
                   'Continue Watching',
@@ -488,6 +496,7 @@ export default function HomeScreen() {
               subtitle="Bingeworthy multi-episode sagas"
               movies={trendingWebSeries}
               onCardPress={navigateToDetails}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() => openViewAll('Trending Web Series', trendingWebSeries)}
               rowRef={(el) => {
                 rowRefs.current['web-series'] = el;
@@ -505,6 +514,7 @@ export default function HomeScreen() {
               subtitle="Feature films in 4K HDR & Dolby Atmos"
               movies={blockbusterMovies}
               onCardPress={navigateToDetails}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() => openViewAll('Blockbuster Movies', blockbusterMovies)}
               rowRef={(el) => {
                 rowRefs.current['movies'] = el;
@@ -522,6 +532,7 @@ export default function HomeScreen() {
               subtitle="Anime epics & family friendly adventures"
               movies={cartoonsAndAnime}
               onCardPress={navigateToDetails}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() => openViewAll('Cartoons & Animation', cartoonsAndAnime)}
               rowRef={(el) => {
                 rowRefs.current['cartoons'] = el;
@@ -539,6 +550,7 @@ export default function HomeScreen() {
               subtitle="Interstellar mysteries and synthetic realities"
               movies={sciFiAndCyberpunk}
               onCardPress={navigateToDetails}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() => openViewAll('Sci-Fi & Cyberpunk', sciFiAndCyberpunk)}
               rowRef={(el) => {
                 rowRefs.current['scifi'] = el;
@@ -556,6 +568,7 @@ export default function HomeScreen() {
               subtitle="Real scientific discoveries and cosmic horizons"
               movies={documentaries}
               onCardPress={navigateToDetails}
+              onCardHover={setIsAnyCardHovered}
               onViewAll={() => openViewAll('Nature & Space Documentaries', documentaries)}
               rowRef={(el) => {
                 rowRefs.current['docs'] = el;
@@ -635,6 +648,7 @@ interface CategoryRowProps {
   rowRef: (el: ScrollView | null) => void;
   onScrollLeft: () => void;
   onScrollRight: () => void;
+  onCardHover?: (isHovered: boolean) => void;
 }
 
 const CategoryRow: React.FC<CategoryRowProps> = ({
@@ -647,6 +661,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   rowRef,
   onScrollLeft,
   onScrollRight,
+  onCardHover,
 }) => {
   return (
     <View style={styles.rowSection}>
@@ -713,6 +728,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                 item={item}
                 progress={prog}
                 onPress={() => onCardPress(item, prog)}
+                onHoverChange={onCardHover}
               />
             </View>
           );
@@ -737,8 +753,7 @@ const styles = StyleSheet.create({
   // Split-Screen Hero Showcase Styles
   heroShowcaseContainer: {
     width: '100%',
-    // @ts-ignore - extend hero to reach content rows
-    minHeight: '88vh',
+    height: 520,
     position: 'relative',
     backgroundColor: '#0D0F14',
     overflow: 'hidden',
@@ -755,24 +770,25 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: '50%',
+    width: '55%',
   },
   heroGradientBottom: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 180,
+    height: 120,
   },
   heroSplitContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 48,
-    paddingVertical: 36,
+    paddingTop: 20,
+    paddingBottom: 20,
     zIndex: 10,
   },
   heroLeftCol: {
-    maxWidth: 820,
+    maxWidth: 780,
     width: '100%',
     justifyContent: 'center',
   },
@@ -924,39 +940,39 @@ const styles = StyleSheet.create({
   },
   // Dot Indicators + Progress Bar
   heroCarouselSelector: {
-    marginTop: 20,
+    marginTop: 18,
   },
   dotIndicatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 10,
   },
   dotIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
     // @ts-ignore
     cursor: 'pointer',
   },
   dotIndicatorActive: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 22,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.primary,
     // @ts-ignore
-    boxShadow: '0 0 10px rgba(229, 169, 60, 0.7)',
+    boxShadow: '0 0 10px rgba(229, 169, 60, 0.8)',
   },
   dotIndicatorHovered: {
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     transform: [{ scale: 1.2 }],
   },
   heroProgressBarTrack: {
-    width: 260,
+    width: 280,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     overflow: 'hidden',
   },
   heroProgressBarFill: {

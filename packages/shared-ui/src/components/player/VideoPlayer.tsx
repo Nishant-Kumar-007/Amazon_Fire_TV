@@ -72,8 +72,11 @@ const VideoPlayer = React.memo(
             const playPromise = webVideoRef.current.play();
             if (playPromise !== undefined) {
               playPromise.catch((err) => {
-                // Autoplay policy or user gesture requirement
-                console.warn("Video playback error or policy restriction:", err);
+                console.warn("Playback restriction, retrying with muted:", err);
+                if (webVideoRef.current) {
+                  webVideoRef.current.muted = true;
+                  webVideoRef.current.play().catch(() => {});
+                }
               });
             }
           }
@@ -90,9 +93,7 @@ const VideoPlayer = React.memo(
               poster={headerImage}
               playsInline
               autoPlay
-              muted
               preload="auto"
-              crossOrigin="anonymous"
               style={{
                 width: "100%",
                 height: "100%",
@@ -101,12 +102,7 @@ const VideoPlayer = React.memo(
               }}
               onWaiting={() => onBuffer(true)}
               onPlaying={() => onBuffer(false)}
-              onCanPlay={(e: any) => {
-                // Unmute after autoplay starts to satisfy browser policy
-                const vid = e.target as HTMLVideoElement;
-                if (vid && vid.muted) {
-                  vid.muted = false;
-                }
+              onCanPlay={() => {
                 onBuffer(false);
               }}
               onTimeUpdate={(e: any) => {
