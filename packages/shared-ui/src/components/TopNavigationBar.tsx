@@ -36,7 +36,6 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
     { id: 'Web Series', label: 'Web Series' },
     { id: 'Cartoons & Animation', label: 'Cartoons' },
     { id: 'Documentaries', label: 'Documentaries' },
-    { id: 'TV', label: 'My List' },
     { id: 'Explore', label: 'Explore & Search' },
   ];
 
@@ -84,18 +83,6 @@ export const TopNavigationBar: React.FC<TopNavigationBarProps> = ({
     <View style={styles.topBarContainer}>
       {/* Left: Brand Identity & Drawer Toggle */}
       <View style={styles.leftBrandSection}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open side navigation drawer"
-          onPress={toggleDrawer}
-          style={({ hovered }: any) => [
-            styles.drawerToggleBtn,
-            hovered && styles.drawerToggleBtnHovered,
-          ]}
-        >
-          <Text style={styles.drawerToggleIcon}>☰</Text>
-        </Pressable>
-
         <Pressable
           accessibilityRole="button"
           onPress={() => {

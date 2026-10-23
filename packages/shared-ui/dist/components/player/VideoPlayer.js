@@ -80,12 +80,19 @@ const VideoPlayer = react_1.default.memo(react_1.default.forwardRef(({ movie, he
     // Web HTML5 Video Implementation
     if (react_native_1.Platform.OS === "web") {
         return (<react_native_1.View style={styles.webContainer}>
-            <video ref={webVideoRef} src={movie} poster={headerImage} playsInline crossOrigin="anonymous" style={{
+            <video ref={webVideoRef} src={movie} poster={headerImage} playsInline autoPlay muted preload="auto" crossOrigin="anonymous" style={{
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
                 backgroundColor: "#000000",
-            }} onWaiting={() => onBuffer(true)} onPlaying={() => onBuffer(false)} onTimeUpdate={(e) => {
+            }} onWaiting={() => onBuffer(true)} onPlaying={() => onBuffer(false)} onCanPlay={(e) => {
+                // Unmute after autoplay starts to satisfy browser policy
+                const vid = e.target;
+                if (vid && vid.muted) {
+                    vid.muted = false;
+                }
+                onBuffer(false);
+            }} onTimeUpdate={(e) => {
                 const target = e.target;
                 if (target) {
                     onProgress(target.currentTime);

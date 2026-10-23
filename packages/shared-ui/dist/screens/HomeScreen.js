@@ -111,13 +111,13 @@ function HomeScreen() {
     const activeHeroTitle = (0, react_1.useMemo)(() => {
         return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || viewEaseCatalog_1.VIEWEASE_CATALOG[0];
     }, [heroFeaturedTitles, heroIndex]);
-    // Auto-advance hero showcase every 6 seconds (unless hovered/interacting)
+    // Auto-advance hero showcase every 5 seconds (unless hovered/interacting)
     (0, react_1.useEffect)(() => {
         if (isHeroHovered)
             return;
         const interval = setInterval(() => {
             setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length);
-        }, 6000);
+        }, 5000);
         return () => clearInterval(interval);
     }, [heroFeaturedTitles.length, isHeroHovered]);
     // Load Continue Watching on mount and focus
@@ -208,9 +208,6 @@ function HomeScreen() {
             <react_native_1.View style={styles.heroLeftCol}>
               {/* Badges Row */}
               <react_native_1.View style={styles.heroBadgeRow}>
-                <react_native_1.View style={styles.spotlightBadge}>
-                  <react_native_1.Text style={styles.spotlightBadgeText}>🔥 LATEST FEATURED</react_native_1.Text>
-                </react_native_1.View>
                 {activeHeroTitle.category && (<react_native_1.View style={styles.categoryPill}>
                     <react_native_1.Text style={styles.categoryPillText}>{activeHeroTitle.category}</react_native_1.Text>
                   </react_native_1.View>)}
@@ -267,27 +264,28 @@ function HomeScreen() {
                 </react_native_1.Pressable>
               </react_native_1.View>
 
-              {/* Continuous Showcase Selector: 8 Title Pills */}
+              {/* Dot Indicators + Active Page Progress Bar */}
               <react_native_1.View style={styles.heroCarouselSelector}>
-                <react_native_1.Text style={styles.selectorLabel}>FEATURED RELEASES ({heroIndex + 1}/8):</react_native_1.Text>
-                <react_native_1.View style={styles.selectorPillsRow}>
+                <react_native_1.View style={styles.dotIndicatorRow}>
                   {heroFeaturedTitles.map((t, idx) => {
             const isSelected = idx === heroIndex;
             return (<react_native_1.Pressable key={t.id} onPress={() => setHeroIndex(idx)} 
             // @ts-ignore
             onMouseEnter={() => setHeroIndex(idx)} style={({ hovered }) => [
-                    styles.selectorPill,
-                    isSelected && styles.selectorPillActive,
-                    hovered && styles.selectorPillHovered,
-                ]}>
-                        <react_native_1.Text style={[
-                    styles.selectorPillText,
-                    isSelected && styles.selectorPillTextActive,
-                ]}>
-                          {idx + 1}
-                        </react_native_1.Text>
-                      </react_native_1.Pressable>);
+                    styles.dotIndicator,
+                    isSelected && styles.dotIndicatorActive,
+                    hovered && !isSelected && styles.dotIndicatorHovered,
+                ]}/>);
         })}
+                </react_native_1.View>
+                {/* Wide progress bar showing current page position */}
+                <react_native_1.View style={styles.heroProgressBarTrack}>
+                  <react_native_1.View style={[
+            styles.heroProgressBarFill,
+            {
+                width: `${((heroIndex + 1) / heroFeaturedTitles.length) * 100}%`,
+            },
+        ]}/>
                 </react_native_1.View>
               </react_native_1.View>
             </react_native_1.View>
@@ -446,7 +444,8 @@ const styles = react_native_1.StyleSheet.create({
     // Split-Screen Hero Showcase Styles
     heroShowcaseContainer: {
         width: '100%',
-        minHeight: 520,
+        // @ts-ignore - extend hero to reach content rows
+        minHeight: '88vh',
         position: 'relative',
         backgroundColor: '#0D0F14',
         overflow: 'hidden',
@@ -630,48 +629,47 @@ const styles = react_native_1.StyleSheet.create({
         fontWeight: '700',
         color: theme_1.colors.text,
     },
+    // Dot Indicators + Progress Bar
     heroCarouselSelector: {
-        marginTop: 6,
+        marginTop: 20,
     },
-    selectorLabel: {
-        fontSize: 11,
-        color: theme_1.colors.textMuted,
-        fontWeight: '700',
-        letterSpacing: 1,
-        marginBottom: 8,
-    },
-    selectorPillsRow: {
+    dotIndicatorRow: {
         flexDirection: 'row',
-        gap: 8,
-    },
-    selectorPill: {
-        width: 28,
-        height: 28,
-        borderRadius: 6,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',
-        justifyContent: 'center',
         alignItems: 'center',
+        gap: 10,
+        marginBottom: 12,
+    },
+    dotIndicator: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
         // @ts-ignore
         cursor: 'pointer',
     },
-    selectorPillActive: {
+    dotIndicatorActive: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
         backgroundColor: theme_1.colors.primary,
-        borderColor: theme_1.colors.primary,
+        // @ts-ignore
+        boxShadow: '0 0 10px rgba(229, 169, 60, 0.7)',
     },
-    selectorPillHovered: {
-        borderColor: '#FFFFFF',
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    dotIndicatorHovered: {
+        backgroundColor: 'rgba(255, 255, 255, 0.55)',
+        transform: [{ scale: 1.2 }],
     },
-    selectorPillText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: theme_1.colors.textMuted,
+    heroProgressBarTrack: {
+        width: 260,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        overflow: 'hidden',
     },
-    selectorPillTextActive: {
-        color: '#0B0D11',
-        fontWeight: '900',
+    heroProgressBarFill: {
+        height: '100%',
+        backgroundColor: theme_1.colors.primary,
+        borderRadius: 2,
     },
     // Right Hero Column: Preview Card
     heroRightCol: {

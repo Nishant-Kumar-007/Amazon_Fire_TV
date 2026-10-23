@@ -89,6 +89,9 @@ const VideoPlayer = React.memo(
               src={movie}
               poster={headerImage}
               playsInline
+              autoPlay
+              muted
+              preload="auto"
               crossOrigin="anonymous"
               style={{
                 width: "100%",
@@ -98,6 +101,14 @@ const VideoPlayer = React.memo(
               }}
               onWaiting={() => onBuffer(true)}
               onPlaying={() => onBuffer(false)}
+              onCanPlay={(e: any) => {
+                // Unmute after autoplay starts to satisfy browser policy
+                const vid = e.target as HTMLVideoElement;
+                if (vid && vid.muted) {
+                  vid.muted = false;
+                }
+                onBuffer(false);
+              }}
               onTimeUpdate={(e: any) => {
                 const target = e.target as HTMLVideoElement;
                 if (target) {

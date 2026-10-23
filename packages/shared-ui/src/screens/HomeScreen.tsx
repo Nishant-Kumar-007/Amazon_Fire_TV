@@ -67,7 +67,7 @@ const MovieCard: React.FC<MovieCardProps> = ({
     >
       <Image
         source={{ uri: item.headerImage || item.posterImage }}
-        style={styles.cardImage}
+        style={styles.cardImage as any}
         resizeMode="cover"
       />
 
@@ -142,12 +142,12 @@ export default function HomeScreen() {
     return heroFeaturedTitles[heroIndex] || heroFeaturedTitles[0] || VIEWEASE_CATALOG[0];
   }, [heroFeaturedTitles, heroIndex]);
 
-  // Auto-advance hero showcase every 6 seconds (unless hovered/interacting)
+  // Auto-advance hero showcase every 5 seconds (unless hovered/interacting)
   useEffect(() => {
     if (isHeroHovered) return;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroFeaturedTitles.length);
-    }, 6000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [heroFeaturedTitles.length, isHeroHovered]);
@@ -289,7 +289,7 @@ export default function HomeScreen() {
           {/* Background image & gradient overlay */}
           <Image
             source={{ uri: activeHeroTitle.headerImage }}
-            style={styles.heroBackdropImage}
+            style={styles.heroBackdropImage as any}
             resizeMode="cover"
           />
           <PlatformLinearGradient
@@ -311,9 +311,6 @@ export default function HomeScreen() {
             <View style={styles.heroLeftCol}>
               {/* Badges Row */}
               <View style={styles.heroBadgeRow}>
-                <View style={styles.spotlightBadge}>
-                  <Text style={styles.spotlightBadgeText}>🔥 LATEST FEATURED</Text>
-                </View>
                 {activeHeroTitle.category && (
                   <View style={styles.categoryPill}>
                     <Text style={styles.categoryPillText}>{activeHeroTitle.category}</Text>
@@ -390,10 +387,9 @@ export default function HomeScreen() {
                 </Pressable>
               </View>
 
-              {/* Continuous Showcase Selector: 8 Title Pills */}
+              {/* Dot Indicators + Active Page Progress Bar */}
               <View style={styles.heroCarouselSelector}>
-                <Text style={styles.selectorLabel}>FEATURED RELEASES ({heroIndex + 1}/8):</Text>
-                <View style={styles.selectorPillsRow}>
+                <View style={styles.dotIndicatorRow}>
                   {heroFeaturedTitles.map((t, idx) => {
                     const isSelected = idx === heroIndex;
                     return (
@@ -403,22 +399,24 @@ export default function HomeScreen() {
                         // @ts-ignore
                         onMouseEnter={() => setHeroIndex(idx)}
                         style={({ hovered }: any) => [
-                          styles.selectorPill,
-                          isSelected && styles.selectorPillActive,
-                          hovered && styles.selectorPillHovered,
+                          styles.dotIndicator,
+                          isSelected && styles.dotIndicatorActive,
+                          hovered && !isSelected && styles.dotIndicatorHovered,
                         ]}
-                      >
-                        <Text
-                          style={[
-                            styles.selectorPillText,
-                            isSelected && styles.selectorPillTextActive,
-                          ]}
-                        >
-                          {idx + 1}
-                        </Text>
-                      </Pressable>
+                      />
                     );
                   })}
+                </View>
+                {/* Wide progress bar showing current page position */}
+                <View style={styles.heroProgressBarTrack}>
+                  <View
+                    style={[
+                      styles.heroProgressBarFill,
+                      {
+                        width: `${((heroIndex + 1) / heroFeaturedTitles.length) * 100}%`,
+                      },
+                    ]}
+                  />
                 </View>
               </View>
             </View>
@@ -739,7 +737,8 @@ const styles = StyleSheet.create({
   // Split-Screen Hero Showcase Styles
   heroShowcaseContainer: {
     width: '100%',
-    minHeight: 520,
+    // @ts-ignore - extend hero to reach content rows
+    minHeight: '88vh',
     position: 'relative',
     backgroundColor: '#0D0F14',
     overflow: 'hidden',
@@ -923,48 +922,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  // Dot Indicators + Progress Bar
   heroCarouselSelector: {
-    marginTop: 6,
+    marginTop: 20,
   },
-  selectorLabel: {
-    fontSize: 11,
-    color: colors.textMuted,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  selectorPillsRow: {
+  dotIndicatorRow: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  selectorPill: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
     alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  dotIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     // @ts-ignore
     cursor: 'pointer',
   },
-  selectorPillActive: {
+  dotIndicatorActive: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    // @ts-ignore
+    boxShadow: '0 0 10px rgba(229, 169, 60, 0.7)',
   },
-  selectorPillHovered: {
-    borderColor: '#FFFFFF',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  dotIndicatorHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    transform: [{ scale: 1.2 }],
   },
-  selectorPillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
+  heroProgressBarTrack: {
+    width: 260,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
   },
-  selectorPillTextActive: {
-    color: '#0B0D11',
-    fontWeight: '900',
+  heroProgressBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
   },
 
   // Right Hero Column: Preview Card

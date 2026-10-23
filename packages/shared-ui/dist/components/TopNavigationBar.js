@@ -51,7 +51,6 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
         { id: 'Web Series', label: 'Web Series' },
         { id: 'Cartoons & Animation', label: 'Cartoons' },
         { id: 'Documentaries', label: 'Documentaries' },
-        { id: 'TV', label: 'My List' },
         { id: 'Explore', label: 'Explore & Search' },
     ];
     const handleNavPress = (item) => {
@@ -96,13 +95,6 @@ const TopNavigationBar = ({ activeTab = 'Home', onSelectCategory, onOpenSearch, 
     return (<react_native_1.View style={styles.topBarContainer}>
       {/* Left: Brand Identity & Drawer Toggle */}
       <react_native_1.View style={styles.leftBrandSection}>
-        <react_native_1.Pressable accessibilityRole="button" accessibilityLabel="Open side navigation drawer" onPress={toggleDrawer} style={({ hovered }) => [
-            styles.drawerToggleBtn,
-            hovered && styles.drawerToggleBtnHovered,
-        ]}>
-          <react_native_1.Text style={styles.drawerToggleIcon}>☰</react_native_1.Text>
-        </react_native_1.Pressable>
-
         <react_native_1.Pressable accessibilityRole="button" onPress={() => {
             if (onSelectCategory)
                 onSelectCategory('All');
